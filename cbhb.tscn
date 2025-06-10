@@ -1,0 +1,76 @@
+[gd_scene load_steps=5 format=3 uid="uid://ddd6dpxasgawl"]
+
+[ext_resource type="Script" uid="uid://dgnmkh4uwid4o" path="res://cchb.gd" id="1_yvgsq"]
+[ext_resource type="PackedScene" uid="uid://c4eddbn7u1bf7" path="res://board.glb" id="2_g28gv"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_colhj"]
+size = Vector3(0.254715, 0.0462646, 1.50574)
+
+[sub_resource type="SphereMesh" id="SphereMesh_0wftd"]
+
+[node name="CBHB" type="Node3D"]
+
+[node name="CharacterBody3D" type="CharacterBody3D" parent="."]
+collision_layer = 2
+floor_stop_on_slope = false
+floor_max_angle = 1.5708
+script = ExtResource("1_yvgsq")
+
+[node name="Board" parent="CharacterBody3D" instance=ExtResource("2_g28gv")]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="CharacterBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.000637174, 0.067688, 0.00518799)
+shape = SubResource("BoxShape3D_colhj")
+
+[node name="RemoteTransformFL" type="RemoteTransform3D" parent="CharacterBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.05, 0.02, -0.65)
+remote_path = NodePath("../RayCastFL")
+
+[node name="RemoteTransformFR" type="RemoteTransform3D" parent="CharacterBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.05, 0.02, -0.65)
+remote_path = NodePath(".")
+
+[node name="RemoteTransformBL" type="RemoteTransform3D" parent="CharacterBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.05, 0.02, 0.65)
+remote_path = NodePath(".")
+
+[node name="RemoteTransformBR" type="RemoteTransform3D" parent="CharacterBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.05, 0.02, 0.65)
+remote_path = NodePath(".")
+
+[node name="CameraPivot" type="Node3D" parent="CharacterBody3D"]
+
+[node name="Camera3D" type="Camera3D" parent="CharacterBody3D/CameraPivot"]
+transform = Transform3D(1, 0, 0, 0, 0.993445, 0.114313, 0, -0.114313, 0.993445, 0, 0.599938, 1.46286)
+
+[node name="RayCastFL" type="RayCast3D" parent="CharacterBody3D" groups=["raycasts"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.05, 0.02, -0.65)
+target_position = Vector3(0, -0.2, 0)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="CharacterBody3D/RayCastFL"]
+transform = Transform3D(0.05, 0, 0, 0, 0.05, 0, 0, 0, 0.05, 0, 0, 0)
+mesh = SubResource("SphereMesh_0wftd")
+
+[node name="RayCastFR" type="RayCast3D" parent="CharacterBody3D" groups=["raycasts"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.05, 0.02, -0.65)
+target_position = Vector3(0, -0.2, 0)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="CharacterBody3D/RayCastFR"]
+transform = Transform3D(0.05, 0, 0, 0, 0.05, 0, 0, 0, 0.05, 0, 0, 0)
+mesh = SubResource("SphereMesh_0wftd")
+
+[node name="RayCastBL" type="RayCast3D" parent="CharacterBody3D" groups=["raycasts"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.05, 0.02, 0.65)
+target_position = Vector3(0, -0.2, 0)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="CharacterBody3D/RayCastBL"]
+transform = Transform3D(0.05, 0, 0, 0, 0.05, 0, 0, 0, 0.05, 0, 0, 0)
+mesh = SubResource("SphereMesh_0wftd")
+
+[node name="RayCastBR" type="RayCast3D" parent="CharacterBody3D" groups=["raycasts"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.05, 0.02, 0.65)
+target_position = Vector3(0, -0.2, 0)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="CharacterBody3D/RayCastBR"]
+transform = Transform3D(0.05, 0, 0, 0, 0.05, 0, 0, 0, 0.05, 0, 0, 0)
+mesh = SubResource("SphereMesh_0wftd")
