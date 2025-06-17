@@ -1,0 +1,17 @@
+[gd_scene load_steps=3 format=3 uid="uid://bp5knrtumahf6"]
+
+[ext_resource type="PackedScene" uid="uid://b5nmtm56rocnm" path="res://floor.tscn" id="1_7nobp"]
+[ext_resource type="PackedScene" uid="uid://k5aaa23djp74" path="res://hover_board.tscn" id="2_7nobp"]
+
+[node name="Node3D" type="Node3D"]
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(-0.866023, -0.433016, 0.250001, 0, 0.499998, 0.866027, -0.500003, 0.749999, -0.43301, 0, 0, 0)
+light_color = Color(1, 0.942976, 0.941426, 1)
+light_energy = 3.0
+shadow_enabled = true
+
+[node name="floor" parent="." instance=ExtResource("1_7nobp")]
+
+[node name="HoverBoard" parent="." instance=ExtResource("2_7nobp")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.316236, -10.1195)

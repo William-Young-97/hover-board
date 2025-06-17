@@ -13,8 +13,6 @@ size = Vector3(0.254715, 0.0462646, 1.50574)
 [node name="HoverBoard" type="RigidBody3D" parent="."]
 collision_layer = 2
 script = ExtResource("1_h72wm")
-engine_force = 150.0
-turn_torque = 20.0
 
 [node name="Board" parent="HoverBoard" instance=ExtResource("2_4spoj")]
 

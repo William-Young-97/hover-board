@@ -1,83 +1,64 @@
 # HoverboardRigid.gd
 extends RigidBody3D
 
-@export var hover_height  : float = 2.0    # meters above ground
-@export var spring_k      : float = 200.0  # spring stiffness
-@export var damper_d      : float = 100.0  # spring damping
-@export var engine_force  : float = 0.00000000000000000000000000001 # N of forward thrust
-@export var turn_torque   : float =    2.0 # Nm of yaw torque
-@export var jump_impulse  : float =  300.0 # upward impulse on jump
+@export var hover_height := 2.0   
+@export var speed := 5.0 
+@export var turn_speed := 2.0
+var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 
-@onready var rays = get_tree().get_nodes_in_group("raycasts")
+func _physics_process(delta):
+	get_input(delta)
 
-var is_airborne := false
+func get_input(delta):
+	
+	var forward = Input.is_action_pressed("forward")
+	var backwards = Input.is_action_pressed("back")
+	var left = Input.is_action_pressed("left")
+	var right = Input.is_action_pressed("right")
+	
+	var rays = get_tree().get_nodes_in_group("raycasts")
+	
+	var forward_dir  = -global_transform.basis.z
+	var backward_dir =  global_transform.basis.z
+	
+	for ray in rays:
+		# Give forward and backward velocity
+		if ray.is_colliding() and forward:
+			apply_central_force(forward_dir * speed)
+		if ray.is_colliding() and backwards:
+			apply_central_force(backward_dir * speed)
+		# Give left and right turn torque
+		if ray.is_colliding() and left:
+			rotate_y(turn_speed * delta)
+		if ray.is_colliding() and right:
+			rotate_y(-turn_speed * delta)
 
-func _ready():
-	custom_integrator = true
-	gravity_scale     = 1.0
-	linear_damp       = 1.0
-	angular_damp      = 2.0
+
+
+func look_follow(
+	state: PhysicsDirectBodyState3D,
+	transform: Transform3D,
+	target_position: Vector3
+) -> void:
+	# 1) Pick your “forward” axis—by convention in Godot + many 3D models it's -Z
+	var forward_dir: Vector3 = -transform.basis.z.normalized()
+	# 2) Compute the direction to your target in world space
+	var to_target: Vector3 = (target_position - transform.origin).normalized()
+	# 3) Compute the angle error (always clamp to avoid NaN)
+	var dot = clamp(forward_dir.dot(to_target), -1.0, 1.0)
+	var angle_error = acos(dot)
+	if angle_error < 0.001:
+		# Already facing the right way
+		state.angular_velocity = Vector3.ZERO
+		return
+	# 4) Compute the shortest rotation axis
+	var turn_axis = forward_dir.cross(to_target).normalized()
+	# 5) Scale it by a turn rate (radians per second)
+	var desired_angular_speed = angle_error * turn_speed
+	state.angular_velocity = turn_axis * desired_angular_speed
+
 
 func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
-	var dt     = state.step
-	var pos    = state.transform.origin
-	var vel    = state.get_linear_velocity()
-
-	# — Collect hit data —
-	var sum_pos   := Vector3.ZERO
-	var sum_norm  := Vector3.ZERO
-	var count     := 0
-
-	for r in rays:
-		r.force_raycast_update()
-		if not r.is_colliding(): continue
-		sum_pos  += r.get_collision_point()
-		sum_norm += r.get_collision_normal()
-		count   += 1
-
-	if count > 0:
-		# average ground point & normal
-		var ground_pt = sum_pos / count
-		var ground_n  = sum_norm.normalized()
-
-		# compute distance along normal from board to ground
-		var to_board = pos - ground_pt
-		var dist     = to_board.dot(ground_n)
-
-		# spring–damper along that normal
-		var error  = hover_height - dist
-		var vel_n  = vel.dot(ground_n)
-		var lift_f = spring_k * error - damper_d * vel_n
-
-		# apply force at center (could also spread to each ray)
-		state.apply_central_force(ground_n * lift_f)
-
-	# — Jump handling —
-	if Input.is_action_just_pressed("jump") and not is_airborne:
-		state.apply_central_impulse(Vector3.UP * jump_impulse)
-		is_airborne = true
-
-	# — Gravity when airborne —
-	if is_airborne:
-		var g  = ProjectSettings.get_setting("physics/3d/default_gravity")
-		var W  = mass * g
-		state.apply_central_force(Vector3.DOWN * W)
-
-		# detect landing by seeing if any ray is colliding *and* normal is sufficiently close to world-up
-		for r in rays:
-			if r.is_colliding() and r.get_collision_normal().dot(Vector3.UP) > 0.5:
-				is_airborne = false
-				break
-
-	# Replace in your integrator:
-
-# — Drive forward/back — 
-	var accel = Input.get_action_strength("forward") - Input.get_action_strength("back")
-	if accel != 0.0:
-		var fwd = -state.transform.basis.z
-		state.apply_central_force(fwd * engine_force * accel)
-
-# — Steering — 
-	var steer = Input.get_action_strength("right") - Input.get_action_strength("left")
-	if steer != 0.0:
-		state.apply_torque(Vector3.UP * turn_torque * steer)
+	# e.g. face 10 units ahead along your board’s local forward:
+	var look_target = global_transform.origin + (-global_transform.basis.z) * 10.0
+	look_follow(state, global_transform, look_target)

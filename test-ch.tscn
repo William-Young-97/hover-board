@@ -1,0 +1,17 @@
+[gd_scene load_steps=3 format=3 uid="uid://nj65aff7f288"]
+
+[ext_resource type="PackedScene" uid="uid://b5nmtm56rocnm" path="res://floor.tscn" id="1_usxrf"]
+[ext_resource type="PackedScene" uid="uid://ddd6dpxasgawl" path="res://cbhb.tscn" id="2_cq2rm"]
+
+[node name="Node3D" type="Node3D"]
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(-0.866023, -0.433016, 0.250001, 0, 0.499998, 0.866027, -0.500003, 0.749999, -0.43301, 0, 0, 0)
+light_color = Color(1, 0.942976, 0.941426, 1)
+light_energy = 3.0
+shadow_enabled = true
+
+[node name="floor" parent="." instance=ExtResource("1_usxrf")]
+
+[node name="CBHB" parent="." instance=ExtResource("2_cq2rm")]
+transform = Transform3D(-0.305978, 0, -0.952039, 0, 1, 0, 0.952039, 0, -0.305978, -6.0188, 0.212531, -5.71506)
