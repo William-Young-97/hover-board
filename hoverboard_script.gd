@@ -12,8 +12,10 @@ var spring_k  = 10.0   # tweak for stiffness
 var damping   = 8.0    # tweak for bounce damping
 
 # this acts moe like the cap for my top speed
-@export var speed := 10.0 
+@export var speed := 10.0
 @export var turn_speed := 5.0
+
+
 var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 
 @onready var fl = $RayCastFL
@@ -21,14 +23,12 @@ var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 @onready var bl = $RayCastBL
 @onready var br = $RayCastBR
 
+
+
 func _physics_process(delta):
-		
 	get_input(delta)
 	apply_character_gravity(delta)
 	apply_hover(delta)
-	# without locking y to 0 then by default moving forward increases y velocity
-	# velocity.y = 0
-	print(velocity.y)
 	move_and_slide()
 
 func get_input(delta):
@@ -36,7 +36,7 @@ func get_input(delta):
 
 	if Input.is_action_pressed("forward"):
 		accel_dir -= global_transform.basis.z
-		print(global_transform.basis)
+		# print(global_transform.basis)
 	if Input.is_action_pressed("back"):
 		accel_dir += global_transform.basis.z
 
