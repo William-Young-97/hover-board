@@ -6,15 +6,26 @@ extends CharacterBody3D
 # work with oreinting the slope?)
 # Ensure that velocity is carried into jumps (rigidbody3d attached to CB3D?)
  
-@export var hover_height := 0.2
+# hover variables
+var hover_height := 0.2
 var deadzone  = 0.1
-var spring_k  = 10.0   # tweak for stiffness
-var damping   = 8.0    # tweak for bounce damping
+var spring_k  = 10.0  
+var damping   = 8.0    
 
-# this acts moe like the cap for my top speed
-@export var speed := 10.0
-@export var turn_speed := 5.0
+# turning variables
+var max_turn_rate : float = 1.5  # (radians/sec)
+# how quickly you accelerate your turning (radians/sec²) when starting a carve
+var turn_acceleration : float = 10.0
+# curve exponent: 1 = linear fall-off, 2 = quadratic, 3 = cubic…
+var turn_curve_exponent : float = 2.0
+# how quickly turn velocity bleeds to zero
+var turn_damping          := 5.0   
+# internal angular velocity state
 
+var _turn_velocity : float = 0.0
+
+var max_acceleration := 10.0    # units/sec² when standing still
+var top_speed        := 30.0 
 
 var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 
@@ -31,43 +42,85 @@ func _physics_process(delta):
 	apply_hover(delta)
 	move_and_slide()
 
-func get_input(delta):
-	var accel_dir := Vector3.ZERO
+func accelerate(delta, input_dir):
+	# Extract a unit vector to give direction
+	# Without affecting magnitude
+	if input_dir != Vector3.ZERO:
+		input_dir = input_dir.normalized()
 
-	if Input.is_action_pressed("forward"):
-		accel_dir -= global_transform.basis.z
-		# print(global_transform.basis)
-	if Input.is_action_pressed("back"):
-		accel_dir += global_transform.basis.z
+	# 2) Current horizontal speed fraction
+	var hvel      = Vector3(velocity.x, 0, velocity.z)
+	var curr_spd  = hvel.length()
+	var speed_frac = clamp(curr_spd / top_speed, 0.0, 1.0)
 
-	if accel_dir != Vector3.ZERO:
-		accel_dir = accel_dir.normalized() * speed
+	# 3) Compute tapered acceleration
+	#    quadratic fall-off: full at 0, zero at 1
+	
+	# add a tool to convert my movement into mph
+	var accel_strength = max_acceleration * (1.0 - speed_frac * speed_frac)
+	print("accel_str: ", accel_strength)
+	print("board_vel:", hvel.length())
+	# 4) Integrate linear acceleration
+	velocity.x += input_dir.x * accel_strength * delta
+	velocity.z += input_dir.z * accel_strength * delta
 
-	# integrate velocity into direction
-	velocity.x = velocity.x + accel_dir.x * delta
-	velocity.z = velocity.z + accel_dir.z * delta
+func steering(delta, turn_input):
+	# 6) Desired angular rate
+	var target_rate = turn_input * max_turn_rate
 
-	# turn the board AND rotate velocity vector
-	var turn_amount := 0.0
-	if Input.is_action_pressed("left"):
-		turn_amount += turn_speed * delta
-	if Input.is_action_pressed("right"):
-		turn_amount -= turn_speed * delta
+	# 7) Angular speed fraction & accel scaling
+	var turn_frac = abs(_turn_velocity) / max_turn_rate
+	turn_frac = clamp(turn_frac, 0.0, 1.0)
+	var turn_accel_scale = 1.0 - pow(turn_frac, turn_curve_exponent)
 
-	# try to "keep" some previous velocity
-	if turn_amount != 0.0:
-		rotate_y(turn_amount)
-		velocity = velocity.rotated(Vector3.UP, turn_amount)
+	# 8) Integrate angular acceleration or apply damping
+	if turn_input == 0.0:
+		# no input → bleed turn velocity back to zero
+		_turn_velocity = lerp(_turn_velocity, 0.0, turn_damping * delta)
+	else:
+		var rate_diff = target_rate - _turn_velocity
+		var applied_accel = sign(rate_diff) * turn_acceleration * turn_accel_scale
+		_turn_velocity += applied_accel * delta
 
-	# clamp horizontal speed so it doesn't go to infinite
-	# cancel out hortizontal magnitude if it is higher than forward and reassign to forward magnitude
-	var hvel := Vector3(velocity.x, 0, velocity.z)
-	var hspeed := hvel.length()
-	if hspeed > speed:
-		hvel = hvel.normalized() * speed
+	# 9) Clamp turn velocity
+	_turn_velocity = clamp(_turn_velocity, -max_turn_rate, max_turn_rate)
+
+	# 10) Apply rotation & carve
+	var actual_turn = _turn_velocity * delta
+	rotate_y(actual_turn)
+	velocity = velocity.rotated(Vector3.UP, actual_turn)
+
+	# ——————————————————————————————
+	# 11) Final speed clamp
+	var hvel = Vector3(velocity.x, 0, velocity.z)
+	if hvel.length() > top_speed:
+		hvel = hvel.normalized() * top_speed
 		velocity.x = hvel.x
 		velocity.z = hvel.z
-		#
+
+# refector longitudinal acceleration and turn acceleration into their own functions
+func get_input(delta):
+	# ——————————————————————————————
+	# 1) Directional input vector
+	var input_dir := Vector3.ZERO
+	if Input.is_action_pressed("forward"):
+		input_dir -= global_transform.basis.z
+	if Input.is_action_pressed("back"):
+		input_dir += global_transform.basis.z
+
+	accelerate(delta, input_dir)
+	# ——————————————————————————————
+	# 5) Turn input
+	var turn_input := 0.0
+	if Input.is_action_pressed("left"):
+		turn_input += 1.0
+	if Input.is_action_pressed("right"):
+		turn_input -= 1.0
+
+	steering(delta, turn_input)
+	
+
+
 	#print("Speed (3D): ", velocity.length())
 
 func is_airborne() -> bool:
@@ -79,7 +132,7 @@ func is_airborne() -> bool:
 			var gap = r.global_transform.origin.y - r.get_collision_point().y
 			gaps.append(gap)
 
-	# No rays hit within 0.2m → you’re clearly airborne
+	# No rays hit within 0.2m clearly airborne
 	if gaps.is_empty():
 		return true
 
