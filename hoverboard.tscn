@@ -11,7 +11,7 @@ size = Vector3(0.254715, 0.0462646, 1.50574)
 
 [node name="HoverBoard" type="Node3D"]
 
-[node name="BoardController" type="CharacterBody3D" parent="."]
+[node name="BoardController" type="CharacterBody3D" parent="." groups=["hoverboard"]]
 transform = Transform3D(1, 0, 0, 0, 0.9996, -0.0282706, 0, 0.0282706, 0.9996, 0, 0, 0)
 collision_layer = 2
 slide_on_ceiling = false

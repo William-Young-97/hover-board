@@ -1,7 +1,9 @@
-[gd_scene load_steps=3 format=3 uid="uid://nj65aff7f288"]
+[gd_scene load_steps=5 format=3 uid="uid://nj65aff7f288"]
 
+[ext_resource type="PackedScene" uid="uid://d4elnm5ktpi2n" path="res://ui.tscn" id="1_ppyta"]
 [ext_resource type="PackedScene" uid="uid://ddd6dpxasgawl" path="res://hoverboard.tscn" id="2_6uqi0"]
 [ext_resource type="PackedScene" uid="uid://knw821a4j8ba" path="res://turning_track.tscn" id="2_8uh7m"]
+[ext_resource type="PackedScene" uid="uid://b5nmtm56rocnm" path="res://floor.tscn" id="3_6uqi0"]
 
 [node name="Node3D" type="Node3D"]
 
@@ -15,3 +17,8 @@ shadow_enabled = true
 transform = Transform3D(-0.998999, 0, 0.0447354, 0, 1, 0, -0.0447354, 0, -0.998999, -32.4195, 1.29231, -5.71506)
 
 [node name="root" parent="." instance=ExtResource("2_8uh7m")]
+
+[node name="root2" parent="." instance=ExtResource("3_6uqi0")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 52.5495, 0, 0)
+
+[node name="UI" parent="." instance=ExtResource("1_ppyta")]

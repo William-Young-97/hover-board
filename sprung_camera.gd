@@ -7,7 +7,7 @@ extends Camera3D
 # we'll begin by assuming that vertical and longituidnal are stable
 # And focus on the movement of the lateral axis
 
-# When 
+# 
 
 @export var lateral_factor     : float   = 1.0
 @export var vertical_factor    : float   = 1.0

@@ -1,10 +1,11 @@
 extends CharacterBody3D
 
 # To do
+# Have the deccelerate button work more effctively at higher velcoities (perhaps a gradual normalisation?)
+# Implement drift
 # Have board correctly change orientation when navigating a slope
-# Ensure that gravity works to pull the board down into position? (how will this
-# work with oreinting the slope?)
-# Ensure that velocity is carried into jumps (rigidbody3d attached to CB3D?)
+# Board gains speed when accelerating into objects
+# Improve airbourne physics
  
 # hover variables
 var hover_height := 0.2
@@ -13,21 +14,38 @@ var spring_k  = 10.0
 var damping   = 8.0    
 
 # turning variables
-var max_turn_rate : float = 1.5  # (radians/sec)
+var max_turn_rate := 1.5  # (radians/sec)
 # how quickly you accelerate your turning (radians/sec²) when starting a carve
-var turn_acceleration : float = 10.0
+var turn_acceleration := 10.0
 # curve exponent: 1 = linear fall-off, 2 = quadratic, 3 = cubic…
-var turn_curve_exponent : float = 2.0
+var turn_curve_exponent := 2.0
 # how quickly turn velocity bleeds to zero
 var turn_damping          := 5.0   
 # internal angular velocity state
-
-var _turn_velocity : float = 0.0
+var _turn_velocity := 0.0
 
 var max_acceleration := 10.0    # units/sec² when standing still
-var top_speed        := 30.0 
+var top_speed        := 50.0 
+
+@export var deceleration_rate := 8.0            # base drag when no input
+@export var reverse_decel_rate := 20.0          # braking strength when pressing back
 
 var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
+
+# Boost parameters
+@export var boost_duration := 1.0       # seconds of boost
+@export var boost_multiplier := 1.0     # multiplies accel during boost
+@export var boost_impulse := 20.0   # units of instantaneous speed added
+# Drift settings
+@export var drift_window := 0.5          # seconds to pick direction after drift button
+@export var drift_velocity_ratio := 0.5  # fraction of forward speed applies sideways
+
+var _drift_timer := 0.0
+var _awaiting_drift := false
+var _drift_active := false
+var _drift_dir := 0   
+
+
 
 @onready var fl = $RayCastFL
 @onready var fr = $RayCastFR
@@ -40,32 +58,49 @@ func _physics_process(delta):
 	get_input(delta)
 	apply_character_gravity(delta)
 	apply_hover(delta)
+	apply_drift(delta)
+	horizontal_clamp()
 	move_and_slide()
-
-func accelerate(delta, input_dir):
-	# Extract a unit vector to give direction
-	# Without affecting magnitude
-	if input_dir != Vector3.ZERO:
-		input_dir = input_dir.normalized()
-
-	# 2) Current horizontal speed fraction
-	var hvel      = Vector3(velocity.x, 0, velocity.z)
-	var curr_spd  = hvel.length()
+	show_speed_mph()
+	
+func show_speed_mph():
+		# Optional: print mph
+	var speed_mph = Vector3(velocity.x, 0, velocity.z).length() * 2.23694
+	print("Speed (mph): ", speed_mph)
+	
+func accelerate(delta):
+	# determine input state
+	var forward_input = Input.is_action_pressed("forward")
+	var back_input = Input.is_action_pressed("back")
+	
+	# current horizontal velocity and speed
+	var hvel = Vector3(velocity.x, 0, velocity.z)
+	var curr_spd = hvel.length()
 	var speed_frac = clamp(curr_spd / top_speed, 0.0, 1.0)
 
-	# 3) Compute tapered acceleration
-	#    quadratic fall-off: full at 0, zero at 1
-	
-	# add a tool to convert my movement into mph
-	var accel_strength = max_acceleration * (1.0 - speed_frac * speed_frac)
-	print("accel_str: ", accel_strength)
-	print("board_vel:", hvel.length())
-	# 4) Integrate linear acceleration
-	velocity.x += input_dir.x * accel_strength * delta
-	velocity.z += input_dir.z * accel_strength * delta
+	if forward_input:
+		# forward acceleration with tapered curve
+		var accel_strength = max_acceleration * (1.0 - speed_frac * speed_frac)
+		var dir = -global_transform.basis.z.normalized()
+		velocity += dir * accel_strength * delta
+	elif back_input:
+		# braking: stronger deceleration at higher speeds
+		if curr_spd > 0.0:
+			var decel = reverse_decel_rate * speed_frac * delta
+			decel = min(decel, curr_spd)
+			var drag_dir = -hvel.normalized()
+			velocity += drag_dir * decel
+	else:
+		# coasting drag: gradient decel (more at high speed)
+		if curr_spd > 0.0:
+			var decel = deceleration_rate * speed_frac * delta
+			decel = min(decel, curr_spd)
+			var drag_dir = -hvel.normalized()
+			velocity += drag_dir * decel
+		
 
 func steering(delta, turn_input):
-	# 6) Desired angular rate
+
 	var target_rate = turn_input * max_turn_rate
 
 	# 7) Angular speed fraction & accel scaling
@@ -90,17 +125,29 @@ func steering(delta, turn_input):
 	rotate_y(actual_turn)
 	velocity = velocity.rotated(Vector3.UP, actual_turn)
 
-	# ——————————————————————————————
-	# 11) Final speed clamp
+func horizontal_clamp():
 	var hvel = Vector3(velocity.x, 0, velocity.z)
 	if hvel.length() > top_speed:
 		hvel = hvel.normalized() * top_speed
 		velocity.x = hvel.x
 		velocity.z = hvel.z
 
-# refector longitudinal acceleration and turn acceleration into their own functions
+func boost():
+
+	# 1) get the normalized forward vector
+	var forward = -global_transform.basis.z.normalized()
+	# 2) apply an instantaneous velocity impulse
+	velocity += forward * boost_impulse
+	# 3) optional: cap at top speed so you don't overshoot too far
+	var hvel = Vector3(velocity.x, 0, velocity.z)
+	if hvel.length() > top_speed:
+		hvel = hvel.normalized() * top_speed
+		velocity.x = hvel.x
+		velocity.z = hvel.z
+
+
 func get_input(delta):
-	# ——————————————————————————————
+
 	# 1) Directional input vector
 	var input_dir := Vector3.ZERO
 	if Input.is_action_pressed("forward"):
@@ -108,20 +155,60 @@ func get_input(delta):
 	if Input.is_action_pressed("back"):
 		input_dir += global_transform.basis.z
 
-	accelerate(delta, input_dir)
-	# ——————————————————————————————
-	# 5) Turn input
+	accelerate(delta)
+
+	# Turn input
 	var turn_input := 0.0
 	if Input.is_action_pressed("left"):
 		turn_input += 1.0
 	if Input.is_action_pressed("right"):
 		turn_input -= 1.0
-
+	
 	steering(delta, turn_input)
 	
+	if Input.is_action_just_pressed("boost"):
+		self.boost()
+	
+	if Input.is_action_just_pressed("drift"):
+		_awaiting_drift = true
+		_drift_timer = drift_window
+		_drift_active = false
+
+# refactor into signal pattern
+func apply_drift(delta):
+	# waiting for direction input
+	if _awaiting_drift:
+		_drift_timer -= delta
+		if Input.is_action_just_pressed("left"):
+			_drift_dir = 1      # right side outside when drifting left
+			_drift_active = true
+			_awaiting_drift = false
+		elif Input.is_action_just_pressed("right"):
+			_drift_dir = -1     # left side outside when drifting right
+			_drift_active = true
+			_awaiting_drift = false
+		elif _drift_timer <= 0.0:
+			_awaiting_drift = false
+
+	# apply drift effect smoothly over time
+	if _drift_active:
+		# compute forward speed
+		var hvel = Vector3(velocity.x, 0, velocity.z)
+		var fwd_speed = hvel.dot(-global_transform.basis.z)
+		# lateral acceleration proportional to forward speed
+		var lateral_accel = fwd_speed * drift_velocity_ratio
+		# direction: board's right axis times drift direction
+		var lateral_dir = global_transform.basis.x * _drift_dir
+		# integrate lateral accel over frame
+		velocity += lateral_dir * lateral_accel * delta
+
+		# end drift on release or when stopping
+		if Input.is_action_just_released("drift") or fwd_speed <= 0:
+			_drift_active = false
+			boost()
 
 
-	#print("Speed (3D): ", velocity.length())
+	# print("Speed (3D): ", velocity.length())
 
 func is_airborne() -> bool:
 	var gaps := []
