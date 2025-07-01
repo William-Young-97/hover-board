@@ -1,7 +1,6 @@
 extends CharacterBody3D
 
 # To do
-# Have the deccelerate button work more effctively at higher velcoities (perhaps a gradual normalisation?)
 # Implement drift
 # Have board correctly change orientation when navigating a slope
 # Board gains speed when accelerating into objects
@@ -11,24 +10,23 @@ extends CharacterBody3D
 var hover_height := 0.2
 var deadzone  = 0.1
 var spring_k  = 10.0  
-var damping   = 8.0    
+var damping   = 15.0    
 
 # turning variables
-var max_turn_rate := 1.5  # (radians/sec)
+var max_turn_rate := 1.5 # (radians/sec)
 # how quickly you accelerate your turning (radians/sec²) when starting a carve
-var turn_acceleration := 10.0
+var turn_acceleration := 10
 # curve exponent: 1 = linear fall-off, 2 = quadratic, 3 = cubic…
-var turn_curve_exponent := 2.0
+var turn_curve_exponent := 2
 # how quickly turn velocity bleeds to zero
-var turn_damping          := 5.0   
+var turn_damping          := 10.0   
 # internal angular velocity state
 var _turn_velocity := 0.0
 
-var max_acceleration := 10.0    # units/sec² when standing still
+var max_acceleration := 8.0    # units/sec² when standing still
 var top_speed        := 50.0 
 
-@export var deceleration_rate := 8.0            # base drag when no input
-@export var reverse_decel_rate := 20.0          # braking strength when pressing back
+var deceleration_rate := 10.0    
 
 var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 
@@ -36,14 +34,6 @@ var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 @export var boost_duration := 1.0       # seconds of boost
 @export var boost_multiplier := 1.0     # multiplies accel during boost
 @export var boost_impulse := 20.0   # units of instantaneous speed added
-# Drift settings
-@export var drift_window := 0.5          # seconds to pick direction after drift button
-@export var drift_velocity_ratio := 0.5  # fraction of forward speed applies sideways
-
-var _drift_timer := 0.0
-var _awaiting_drift := false
-var _drift_active := false
-var _drift_dir := 0   
 
 
 
@@ -58,93 +48,11 @@ func _physics_process(delta):
 	get_input(delta)
 	apply_character_gravity(delta)
 	apply_hover(delta)
+	print(get_slip_angle_deg())
 	apply_drift(delta)
 	horizontal_clamp()
 	move_and_slide()
-	show_speed_mph()
 	
-func show_speed_mph():
-		# Optional: print mph
-	var speed_mph = Vector3(velocity.x, 0, velocity.z).length() * 2.23694
-	print("Speed (mph): ", speed_mph)
-	
-func accelerate(delta):
-	# determine input state
-	var forward_input = Input.is_action_pressed("forward")
-	var back_input = Input.is_action_pressed("back")
-	
-	# current horizontal velocity and speed
-	var hvel = Vector3(velocity.x, 0, velocity.z)
-	var curr_spd = hvel.length()
-	var speed_frac = clamp(curr_spd / top_speed, 0.0, 1.0)
-
-	if forward_input:
-		# forward acceleration with tapered curve
-		var accel_strength = max_acceleration * (1.0 - speed_frac * speed_frac)
-		var dir = -global_transform.basis.z.normalized()
-		velocity += dir * accel_strength * delta
-	elif back_input:
-		# braking: stronger deceleration at higher speeds
-		if curr_spd > 0.0:
-			var decel = reverse_decel_rate * speed_frac * delta
-			decel = min(decel, curr_spd)
-			var drag_dir = -hvel.normalized()
-			velocity += drag_dir * decel
-	else:
-		# coasting drag: gradient decel (more at high speed)
-		if curr_spd > 0.0:
-			var decel = deceleration_rate * speed_frac * delta
-			decel = min(decel, curr_spd)
-			var drag_dir = -hvel.normalized()
-			velocity += drag_dir * decel
-		
-
-func steering(delta, turn_input):
-
-	var target_rate = turn_input * max_turn_rate
-
-	# 7) Angular speed fraction & accel scaling
-	var turn_frac = abs(_turn_velocity) / max_turn_rate
-	turn_frac = clamp(turn_frac, 0.0, 1.0)
-	var turn_accel_scale = 1.0 - pow(turn_frac, turn_curve_exponent)
-
-	# 8) Integrate angular acceleration or apply damping
-	if turn_input == 0.0:
-		# no input → bleed turn velocity back to zero
-		_turn_velocity = lerp(_turn_velocity, 0.0, turn_damping * delta)
-	else:
-		var rate_diff = target_rate - _turn_velocity
-		var applied_accel = sign(rate_diff) * turn_acceleration * turn_accel_scale
-		_turn_velocity += applied_accel * delta
-
-	# 9) Clamp turn velocity
-	_turn_velocity = clamp(_turn_velocity, -max_turn_rate, max_turn_rate)
-
-	# 10) Apply rotation & carve
-	var actual_turn = _turn_velocity * delta
-	rotate_y(actual_turn)
-	velocity = velocity.rotated(Vector3.UP, actual_turn)
-
-func horizontal_clamp():
-	var hvel = Vector3(velocity.x, 0, velocity.z)
-	if hvel.length() > top_speed:
-		hvel = hvel.normalized() * top_speed
-		velocity.x = hvel.x
-		velocity.z = hvel.z
-
-func boost():
-
-	# 1) get the normalized forward vector
-	var forward = -global_transform.basis.z.normalized()
-	# 2) apply an instantaneous velocity impulse
-	velocity += forward * boost_impulse
-	# 3) optional: cap at top speed so you don't overshoot too far
-	var hvel = Vector3(velocity.x, 0, velocity.z)
-	if hvel.length() > top_speed:
-		hvel = hvel.normalized() * top_speed
-		velocity.x = hvel.x
-		velocity.z = hvel.z
-
 
 func get_input(delta):
 
@@ -170,45 +78,110 @@ func get_input(delta):
 		self.boost()
 	
 	if Input.is_action_just_pressed("drift"):
-		_awaiting_drift = true
-		_drift_timer = drift_window
-		_drift_active = false
+		pass
+		
+func accelerate(delta):
+	# determine input state
+	var forward_input = Input.is_action_pressed("forward")
+	var back_input = Input.is_action_pressed("back")
+	
+	# current horizontal velocity and speed
+	var hvel = Vector3(velocity.x, 0, velocity.z)
+	var curr_spd = hvel.length()
+	var speed_frac = clamp(curr_spd / top_speed, 0.0, 1.0)
+	
+	if forward_input:
+		# forward acceleration with tapered curve
+		var accel_strength = max_acceleration * (1.0 - speed_frac * speed_frac)
+		var dir = -global_transform.basis.z.normalized()
+		velocity += dir * accel_strength * delta
+	elif back_input:
+		# braking: stronger deceleration at higher speeds
+		if curr_spd > 0.0:
+			var decel = deceleration_rate   * delta
+			decel = min(decel, curr_spd)
+			var drag_dir = -hvel.normalized()
+			velocity += drag_dir * decel
+	else:
+		# coasting drag: gradient decel (more at high speed)
+		if curr_spd > 0.0:
+			var decel = deceleration_rate * speed_frac * delta
+			decel = min(decel, curr_spd)
+			var drag_dir = -hvel.normalized()
+			velocity += drag_dir * decel
+		
+
+
+func steering(delta, turn_input):
+	var target_rate = turn_input * max_turn_rate
+
+	# Compute how “full” our current carve is
+	var turn_frac = abs(_turn_velocity) / max_turn_rate
+	turn_frac = clamp(turn_frac, 0.0, 1.0)
+	var turn_accel_scale = 1.0 - pow(turn_frac, turn_curve_exponent)
+
+	if turn_input == 0.0:
+		# bleed off when you let go
+		_turn_velocity = lerp(_turn_velocity, 0.0, turn_damping * delta)
+	else:
+		var rate_diff = target_rate - _turn_velocity
+
+		# If reversing direction, slam on full carve authority
+		var effective_scale = turn_accel_scale
+		if rate_diff * _turn_velocity < 0:
+			effective_scale = 1.0
+
+		var applied_accel = sign(rate_diff) * turn_acceleration * effective_scale
+		_turn_velocity += applied_accel * delta
+	_turn_velocity = clamp(_turn_velocity, -max_turn_rate, max_turn_rate)
+
+	var actual_turn = _turn_velocity * delta
+	rotate_y(actual_turn)
+	velocity = velocity.rotated(Vector3.UP, actual_turn)
+
+
+func horizontal_clamp():
+	var hvel = Vector3(velocity.x, 0, velocity.z)
+	if hvel.length() > top_speed:
+		hvel = hvel.normalized() * top_speed
+		velocity.x = hvel.x
+		velocity.z = hvel.z
+
+func boost():
+
+	# 1) get the normalized forward vector
+	var forward = -global_transform.basis.z.normalized()
+	# 2) apply an instantaneous velocity impulse
+	velocity += forward * boost_impulse
+	# 3) optional: cap at top speed so you don't overshoot too far
+	var hvel = Vector3(velocity.x, 0, velocity.z)
+	if hvel.length() > top_speed:
+		hvel = hvel.normalized() * top_speed
+		velocity.x = hvel.x
+		velocity.z = hvel.z
+
+func get_slip_angle_deg() -> float:
+	# 1) Build your horizontal velocity vector
+	var hvel = Vector3(velocity.x, 0, velocity.z)
+	var speed = hvel.length()
+	if speed < 0.1:
+		return 0.0   # no meaningful slip at very low speed
+
+	# 2) World‐space forward direction (unit)
+	var fwd = -global_transform.basis.z.normalized()
+
+	# 3) Velocity direction (unit)
+	var vel_dir = hvel / speed  # same as .normalized()
+
+	# 4) Angle between: acos(dot) → radians, then convert
+	var cos_theta = clamp(fwd.dot(vel_dir), -1.0, 1.0)
+	var angle_rad = acos(cos_theta)
+	return rad_to_deg(angle_rad)
+
 
 # refactor into signal pattern
 func apply_drift(delta):
-	# waiting for direction input
-	if _awaiting_drift:
-		_drift_timer -= delta
-		if Input.is_action_just_pressed("left"):
-			_drift_dir = 1      # right side outside when drifting left
-			_drift_active = true
-			_awaiting_drift = false
-		elif Input.is_action_just_pressed("right"):
-			_drift_dir = -1     # left side outside when drifting right
-			_drift_active = true
-			_awaiting_drift = false
-		elif _drift_timer <= 0.0:
-			_awaiting_drift = false
-
-	# apply drift effect smoothly over time
-	if _drift_active:
-		# compute forward speed
-		var hvel = Vector3(velocity.x, 0, velocity.z)
-		var fwd_speed = hvel.dot(-global_transform.basis.z)
-		# lateral acceleration proportional to forward speed
-		var lateral_accel = fwd_speed * drift_velocity_ratio
-		# direction: board's right axis times drift direction
-		var lateral_dir = global_transform.basis.x * _drift_dir
-		# integrate lateral accel over frame
-		velocity += lateral_dir * lateral_accel * delta
-
-		# end drift on release or when stopping
-		if Input.is_action_just_released("drift") or fwd_speed <= 0:
-			_drift_active = false
-			boost()
-
-
-	# print("Speed (3D): ", velocity.length())
+	pass
 
 func is_airborne() -> bool:
 	var gaps := []
@@ -276,4 +249,3 @@ func apply_hover(delta):
 		# damper: F_d = -d * velocity.y
 		var damp  = -damping  * velocity.y
 		velocity.y += (force + damp) * delta
-	

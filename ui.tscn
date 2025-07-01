@@ -8,6 +8,6 @@ script = ExtResource("1_fyqef")
 [node name="SpeedLabel" type="RichTextLabel" parent="."]
 offset_left = 10.0
 offset_top = 10.0
-offset_right = 90.0
+offset_right = 110.0
 offset_bottom = 50.0
 autowrap_mode = 0
