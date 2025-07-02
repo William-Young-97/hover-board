@@ -26,11 +26,20 @@ var _turn_velocity := 0.0
 var max_acceleration := 8.0    # units/sec² when standing still
 var top_speed        := 50.0 
 
-var deceleration_rate := 10.0    
+var deceleration_rate := 10.0
+
+var drift_active := false
+var drift_dir    := 0
+var drift_target_yaw := 0.0
+var drift_smooth_speed := 1
+var drift_speed_threshold_mph := 20.0   # min speed to allow drift
+var default_drift_angle := 2          # radians to yaw when drift starts
+var drift_velocity_ratio := 0.8  
+var drift_entry_speed := 0.0
 
 var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 
-# Boost parameters
+# Boost parametersw
 @export var boost_duration := 1.0       # seconds of boost
 @export var boost_multiplier := 1.0     # multiplies accel during boost
 @export var boost_impulse := 20.0   # units of instantaneous speed added
@@ -48,7 +57,6 @@ func _physics_process(delta):
 	get_input(delta)
 	apply_character_gravity(delta)
 	apply_hover(delta)
-	print(get_slip_angle_deg())
 	apply_drift(delta)
 	horizontal_clamp()
 	move_and_slide()
@@ -62,8 +70,8 @@ func get_input(delta):
 		input_dir -= global_transform.basis.z
 	if Input.is_action_pressed("back"):
 		input_dir += global_transform.basis.z
-
-	accelerate(delta)
+	if not drift_active:
+		accelerate(delta)
 
 	# Turn input
 	var turn_input := 0.0
@@ -160,29 +168,59 @@ func boost():
 		velocity.x = hvel.x
 		velocity.z = hvel.z
 
-func get_slip_angle_deg() -> float:
-	# 1) Build your horizontal velocity vector
-	var hvel = Vector3(velocity.x, 0, velocity.z)
-	var speed = hvel.length()
-	if speed < 0.1:
-		return 0.0   # no meaningful slip at very low speed
-
-	# 2) World‐space forward direction (unit)
-	var fwd = -global_transform.basis.z.normalized()
-
-	# 3) Velocity direction (unit)
-	var vel_dir = hvel / speed  # same as .normalized()
-
-	# 4) Angle between: acos(dot) → radians, then convert
-	var cos_theta = clamp(fwd.dot(vel_dir), -1.0, 1.0)
-	var angle_rad = acos(cos_theta)
-	return rad_to_deg(angle_rad)
-
-
 # refactor into signal pattern
 func apply_drift(delta):
-	pass
+	# 1) Arm the drift on press
+	if Input.is_action_just_pressed("drift") and not drift_active:
+		var hvel = Vector3(velocity.x, 0, velocity.z)
+		var speed_mph = hvel.length() * 2.23694
+		if speed_mph < drift_speed_threshold_mph:
+			return
+		if Input.is_action_pressed("left"):
+			drift_dir = +1
+		elif Input.is_action_pressed("right"):
+			drift_dir = -1
+		else:
+			return
 
+		# **capture your entry speed (world units/sec)**
+		drift_entry_speed = hvel.length()
+		drift_active = true
+		drift_target_yaw = rotation.y + default_drift_angle * drift_dir
+
+	# 2) While held, carve and push sideways
+	if drift_active and Input.is_action_pressed("drift"):
+		# — smooth yaw carve —
+		var new_yaw = lerp_angle(rotation.y, drift_target_yaw, drift_smooth_speed * delta)
+		var angle_delta = new_yaw - rotation.y
+		rotation.y = new_yaw
+
+		# — re‐orient and LOCK your forward speed —
+		# rotate the direction of your velocity without changing entry speed
+		var forward_dir = -global_transform.basis.z.normalized()
+		# carve your velocity direction
+		velocity = velocity.rotated(Vector3.UP, angle_delta)
+		# now override the forward component to exactly the drift_entry_speed
+		var side_vel = Vector3(velocity.x, 0, velocity.z) - forward_dir * forward_dir.dot(Vector3(velocity.x,0,velocity.z))
+		velocity.x = forward_dir.x * drift_entry_speed + side_vel.x
+		velocity.z = forward_dir.z * drift_entry_speed + side_vel.z
+
+		# — lateral slide on top —
+		var lateral_acc = drift_entry_speed * drift_velocity_ratio
+		var side_dir = global_transform.basis.x * drift_dir
+		velocity += side_dir * (lateral_acc * delta)
+
+		return
+
+	# 3) End on release: remove any sideways and unlock
+	if drift_active and Input.is_action_just_released("drift"):
+		var lateral_dir = global_transform.basis.x.normalized()
+		var lat_spd = velocity.dot(lateral_dir)
+		velocity -= lateral_dir * lat_spd
+
+		drift_active = false
+		drift_entry_speed = 0.0
+		
 func is_airborne() -> bool:
 	var gaps := []
 	# Collect the world-space “gap” from each corner to the surface.
