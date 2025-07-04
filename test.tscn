@@ -1,11 +1,22 @@
-[gd_scene load_steps=5 format=3 uid="uid://nj65aff7f288"]
+[gd_scene load_steps=9 format=3 uid="uid://nj65aff7f288"]
 
 [ext_resource type="PackedScene" uid="uid://d4elnm5ktpi2n" path="res://ui.tscn" id="1_ppyta"]
 [ext_resource type="PackedScene" uid="uid://ddd6dpxasgawl" path="res://hoverboard.tscn" id="2_6uqi0"]
 [ext_resource type="PackedScene" uid="uid://knw821a4j8ba" path="res://turning_track.tscn" id="2_8uh7m"]
 [ext_resource type="PackedScene" uid="uid://b5nmtm56rocnm" path="res://floor.tscn" id="3_6uqi0"]
+[ext_resource type="Texture2D" uid="uid://c2ac46bpv775u" path="res://panorama_image.png" id="5_ykrsh"]
 
-[node name="Node3D" type="Node3D"]
+[sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_g14j6"]
+panorama = ExtResource("5_ykrsh")
+
+[sub_resource type="Sky" id="Sky_vbegm"]
+sky_material = SubResource("PanoramaSkyMaterial_g14j6")
+
+[sub_resource type="Environment" id="Environment_ehkex"]
+background_mode = 2
+sky = SubResource("Sky_vbegm")
+
+[node name="World" type="Node3D"]
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(-0.866023, -0.433016, 0.250001, 0, 0.499998, 0.866027, -0.500003, 0.749999, -0.43301, 0, 0, 0)
@@ -22,3 +33,6 @@ transform = Transform3D(-0.998999, 0, 0.0447354, 0, 1, 0, -0.0447354, 0, -0.9989
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 52.5495, 0, 0)
 
 [node name="UI" parent="." instance=ExtResource("1_ppyta")]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_ehkex")
