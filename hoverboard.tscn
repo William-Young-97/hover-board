@@ -54,6 +54,9 @@ script = ExtResource("3_g28gv")
 
 [node name="RayCastFL" type="RayCast3D" parent="BoardController" groups=["raycasts"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.05, 0.02, -0.65)
+target_position = Vector3(0, -0.25, 0)
+debug_shape_custom_color = Color(1, 0, 0, 1)
+debug_shape_thickness = 1
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="BoardController/RayCastFL"]
 transform = Transform3D(0.05, 0, 0, 0, 0.05, 0, 0, 0, 0.05, 0, 0, 0)
@@ -61,6 +64,9 @@ mesh = SubResource("SphereMesh_0wftd")
 
 [node name="RayCastFR" type="RayCast3D" parent="BoardController" groups=["raycasts"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.05, 0.02, -0.65)
+target_position = Vector3(0, -0.25, 0)
+debug_shape_custom_color = Color(1, 0, 0, 1)
+debug_shape_thickness = 1
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="BoardController/RayCastFR"]
 transform = Transform3D(0.05, 0, 0, 0, 0.05, 0, 0, 0, 0.05, 0, 0, 0)
@@ -68,6 +74,9 @@ mesh = SubResource("SphereMesh_0wftd")
 
 [node name="RayCastBL" type="RayCast3D" parent="BoardController" groups=["raycasts"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.05, 0.02, 0.65)
+target_position = Vector3(0, -0.25, 0)
+debug_shape_custom_color = Color(1, 0, 0, 1)
+debug_shape_thickness = 1
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="BoardController/RayCastBL"]
 transform = Transform3D(0.05, 0, 0, 0, 0.05, 0, 0, 0, 0.05, 0, 0, 0)
@@ -75,6 +84,9 @@ mesh = SubResource("SphereMesh_0wftd")
 
 [node name="RayCastBR" type="RayCast3D" parent="BoardController" groups=["raycasts"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.05, 0.02, 0.65)
+target_position = Vector3(0, -0.25, 0)
+debug_shape_custom_color = Color(1, 0, 0, 1)
+debug_shape_thickness = 1
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="BoardController/RayCastBR"]
 transform = Transform3D(0.05, 0, 0, 0, 0.05, 0, 0, 0, 0.05, 0, 0, 0)
