@@ -1,4 +1,4 @@
-[gd_scene format=3 uid="uid://knw821a4j8ba"]
+[gd_scene format=3 uid="uid://dp0sm5dfrhuvp"]
 
 [node name="root" type="Node3D"]
 
@@ -7,12 +7,6 @@ transform = Transform3D(0.19622, 0, 0.98056, 0, 1, 0, -0.98056, 0, 0.19622, -10.
 use_collision = true
 collision_mask = 3
 size = Vector3(12.9797, 1, 11.7902)
-
-[node name="CSGBox3D" type="CSGBox3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.31743, 0.125099, -13.5562)
-use_collision = true
-collision_mask = 3
-size = Vector3(16.4406, 1, 28.1124)
 
 [node name="CSGBox3D2" type="CSGBox3D" parent="."]
 transform = Transform3D(0.941641, 0, 0.336619, 0, 1, 0, -0.336619, 0, 0.941641, 2.67317, 0, -27.5828)
@@ -39,7 +33,7 @@ collision_mask = 3
 size = Vector3(15.5477, 1, 42.8205)
 
 [node name="CSGBox3D7" type="CSGBox3D" parent="."]
-transform = Transform3D(0.999119, 0, 0.0419629, 0, 1, 0, -0.0419629, 0, 0.999119, 7.61318, 0, 32.4035)
+transform = Transform3D(0.999119, 0, 0.0419629, 0, 1, 0, -0.0419629, 0, 0.999119, 7.61318, 0, 7.36344)
 use_collision = true
 collision_mask = 3
 size = Vector3(16.6791, 1, 65.2892)

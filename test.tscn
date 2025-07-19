@@ -1,38 +1,41 @@
-[gd_scene load_steps=9 format=3 uid="uid://nj65aff7f288"]
+[gd_scene load_steps=8 format=3 uid="uid://nj65aff7f288"]
 
 [ext_resource type="PackedScene" uid="uid://d4elnm5ktpi2n" path="res://ui.tscn" id="1_ppyta"]
-[ext_resource type="PackedScene" uid="uid://ddd6dpxasgawl" path="res://hoverboard.tscn" id="2_6uqi0"]
-[ext_resource type="PackedScene" uid="uid://knw821a4j8ba" path="res://turning_track.tscn" id="2_8uh7m"]
-[ext_resource type="PackedScene" uid="uid://b5nmtm56rocnm" path="res://floor.tscn" id="3_6uqi0"]
-[ext_resource type="Texture2D" uid="uid://c2ac46bpv775u" path="res://panorama_image.png" id="5_ykrsh"]
+[ext_resource type="PackedScene" uid="uid://ddd6dpxasgawl" path="res://player.tscn" id="2_6uqi0"]
+[ext_resource type="PackedScene" uid="uid://drr268xrb3mn7" path="res://Sqaure-park.glb" id="3_6uqi0"]
+[ext_resource type="Texture2D" uid="uid://c2ac46bpv775u" path="res://panorama_image.png" id="3_ppyta"]
 
-[sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_g14j6"]
-panorama = ExtResource("5_ykrsh")
+[sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_ykrsh"]
+panorama = ExtResource("3_ppyta")
 
-[sub_resource type="Sky" id="Sky_vbegm"]
-sky_material = SubResource("PanoramaSkyMaterial_g14j6")
+[sub_resource type="Sky" id="Sky_g14j6"]
+sky_material = SubResource("PanoramaSkyMaterial_ykrsh")
 
-[sub_resource type="Environment" id="Environment_ehkex"]
+[sub_resource type="Environment" id="Environment_vbegm"]
 background_mode = 2
-sky = SubResource("Sky_vbegm")
+sky = SubResource("Sky_g14j6")
 
 [node name="World" type="Node3D"]
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
-transform = Transform3D(-0.866023, -0.433016, 0.250001, 0, 0.499998, 0.866027, -0.500003, 0.749999, -0.43301, 0, 0, 0)
+transform = Transform3D(-0.866024, -0.433016, 0.250001, 0, 0.499998, 0.866026, -0.500003, 0.749999, -0.43301, 0, 3.5986, 0)
 light_color = Color(1, 0.942976, 0.941426, 1)
 light_energy = 3.0
 shadow_enabled = true
 
 [node name="CBHB" parent="." instance=ExtResource("2_6uqi0")]
-transform = Transform3D(-0.998999, 0, 0.0447354, 0, 1, 0, -0.0447354, 0, -0.998999, -32.4195, 1.29231, -5.71506)
-
-[node name="root" parent="." instance=ExtResource("2_8uh7m")]
-
-[node name="root2" parent="." instance=ExtResource("3_6uqi0")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 52.5495, 0, 0)
+transform = Transform3D(-0.998999, 0, 0.0447354, 0, 1, 0, -0.0447354, 0, -0.998999, -0.0546613, 0.644119, -22.4603)
 
 [node name="UI" parent="." instance=ExtResource("1_ppyta")]
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
-environment = SubResource("Environment_ehkex")
+environment = SubResource("Environment_vbegm")
+
+[node name="Sqaure-park" parent="." instance=ExtResource("3_6uqi0")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+
+[node name="Sqaure-park2" parent="." instance=ExtResource("3_6uqi0")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.500002, 60)
+
+[node name="Sqaure-park3" parent="." instance=ExtResource("3_6uqi0")]
+transform = Transform3D(0.939693, 0.34202, 0, -0.34202, 0.939693, 0, 0, 0, 1, 58.124, -10.75, 59.92)
