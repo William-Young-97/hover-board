@@ -1,12 +1,12 @@
 [gd_scene load_steps=8 format=3 uid="uid://nj65aff7f288"]
 
-[ext_resource type="PackedScene" uid="uid://d4elnm5ktpi2n" path="res://ui.tscn" id="1_ppyta"]
-[ext_resource type="PackedScene" uid="uid://ddd6dpxasgawl" path="res://player.tscn" id="2_6uqi0"]
-[ext_resource type="PackedScene" uid="uid://drr268xrb3mn7" path="res://Sqaure-park.glb" id="3_6uqi0"]
-[ext_resource type="Texture2D" uid="uid://c2ac46bpv775u" path="res://panorama_image.png" id="3_ppyta"]
+[ext_resource type="PackedScene" uid="uid://ddd6dpxasgawl" path="res://scenes/player.tscn" id="1_74lek"]
+[ext_resource type="PackedScene" uid="uid://d4elnm5ktpi2n" path="res://scenes/ui.tscn" id="2_j5jx5"]
+[ext_resource type="Texture2D" uid="uid://c2ac46bpv775u" path="res://models/map/panorama_image.png" id="3_lpvoh"]
+[ext_resource type="PackedScene" uid="uid://drr268xrb3mn7" path="res://models/map/Square-park.glb" id="4_at5dv"]
 
 [sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_ykrsh"]
-panorama = ExtResource("3_ppyta")
+panorama = ExtResource("3_lpvoh")
 
 [sub_resource type="Sky" id="Sky_g14j6"]
 sky_material = SubResource("PanoramaSkyMaterial_ykrsh")
@@ -23,19 +23,20 @@ light_color = Color(1, 0.942976, 0.941426, 1)
 light_energy = 3.0
 shadow_enabled = true
 
-[node name="CBHB" parent="." instance=ExtResource("2_6uqi0")]
+[node name="Player" parent="." instance=ExtResource("1_74lek")]
 transform = Transform3D(-0.998999, 0, 0.0447354, 0, 1, 0, -0.0447354, 0, -0.998999, -0.0546613, 0.644119, -22.4603)
 
-[node name="UI" parent="." instance=ExtResource("1_ppyta")]
+[node name="UI" parent="." instance=ExtResource("2_j5jx5")]
+player_path = NodePath("../Player")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_vbegm")
 
-[node name="Sqaure-park" parent="." instance=ExtResource("3_6uqi0")]
+[node name="Square-park" parent="." instance=ExtResource("4_at5dv")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
 
-[node name="Sqaure-park2" parent="." instance=ExtResource("3_6uqi0")]
+[node name="Square-park2" parent="." instance=ExtResource("4_at5dv")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.500002, 60)
 
-[node name="Sqaure-park3" parent="." instance=ExtResource("3_6uqi0")]
+[node name="Square-park3" parent="." instance=ExtResource("4_at5dv")]
 transform = Transform3D(0.939693, 0.34202, 0, -0.34202, 0.939693, 0, 0, 0, 1, 58.124, -10.75, 59.92)

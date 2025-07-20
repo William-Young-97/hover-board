@@ -1,31 +1,34 @@
 extends State
 class_name DriftingState
 # TODO
-# add min speed else drift exits
-# Add roll to the body and keep ray castrs down to really sell the drift more
+# Add roll to the body and keep ray casts down to really sell the drift more
 
 # mini game system?  
  
 var state_name = "drifting"
 var _inward_drift_timer = 0
+var dir: int
 
 func enter(character: Character, delta) -> void:
 	pass
-
+	
 func exit(character: Character, delta) -> void:
 	pass
 	
 func update(character: Character, delta) -> void:
-	# normal in–air physics
 	character.apply_character_gravity(delta)
 	character.move_and_slide()
 	character.apply_hover(delta)
-	_apply_drift(character, delta)
-	accelerate_drift(character, delta)
-	decelerate_drift(character, delta)
-	print("fwd_dir: ", character.velocity.normalized())
 	
-	#exit_at_10_mph(character)
+	_exit_at_10_mph(character)
+	_apply_drift(character, delta)
+
+	if character.input_forward:
+		_accelerate_drift(character, delta)
+	if character.input_backward:
+		_decelerate_drift(character, delta)
+		
+	
 
 func on_trigger(character: Character, trigger: int) -> State:
 	match trigger:
@@ -40,18 +43,15 @@ func _apply_drift(character: Character, delta):
 	# this will probably benefit from being some kind of scaled ratio
 	var outward_push_strength := 1.5 
 	var side = character.get_side_axis()
-	var dir = 0
 	
 	if character.left_drift:
 		if character.input_left:
 			dir = 1
 			var max_yaw = _scale_drift_yaw_to_speed(character, delta)
 			_scale_yaw_to_input(character, delta, max_yaw, dir)
-			
 			_apply_inward_drift_velocity_blend(character, delta)
-			
 		elif character.input_right:
-			
+			dir = 1
 			_inward_drift_timer = 0
 			_apply_outward_drift(character, dir, delta)
 		else:
@@ -64,44 +64,42 @@ func _apply_drift(character: Character, delta):
 			_scale_yaw_to_input(character, delta, max_yaw, dir)
 			_apply_inward_drift_velocity_blend(character, delta)
 		elif character.input_left:
+			dir = -1
 			_inward_drift_timer = 0
 
 			_apply_outward_drift(character, dir, delta)
 		else:
 			_inward_drift_timer = 0
-		
-func _apply_outward_drift(character: Character, dir, delta: float):
-	# How strong pure “sideways” shove is:
-	var outward_push_strength := 2.5 
-	var drift_vel_blend := 0.1
-	var side = character.get_side_axis() 
+			
+func _apply_outward_drift(character: Character, dir: int, delta: float) -> void:
+	var shift_rate := 0.05 # fraction of forward speed per second to reassign
+	var forward = character.get_forward_direction()
+	forward.y = 0; forward = forward.normalized()
+	var side = character.get_side_axis()
+
+	# split current forward & lateral speeds
+	var hvel = character.get_hvel(character)
+	var fwd_spd = forward.dot(hvel)
+	var lat_spd = side.dot(hvel)
+
+	# compute how much to shift this frame
+	var shift = min(fwd_spd, fwd_spd * shift_rate * delta)
 	
-	# Compute sideways push:
-	var side_vel = side * dir * outward_push_strength * delta
-
-	# Blend with “toward‐nose” correction:
-	var hvel = Vector3(character.velocity.x, 0, character.velocity.z)
-	var curr_yaw   = atan2(hvel.x, hvel.z)
-	var nose_yaw   = character.rotation.y
-
-	var blend_amount = clamp(drift_vel_blend * delta, 0, 1)
-	var target_yaw = lerp_angle(curr_yaw, nose_yaw, blend_amount)
-	var blended_dir = Vector3( sin(target_yaw), 0, cos(target_yaw) )
-
-	var forward_speed = blended_dir.dot(hvel)
-	var corrected_vel = blended_dir * forward_speed
-	corrected_vel += side_vel
+	# remove from forward, add (with sign) to lateral
+	fwd_spd -= shift
+	lat_spd += dir * shift
+	
+	var new_hvel = forward * fwd_spd + side * lat_spd
+	character.velocity.x = new_hvel.x
+	character.velocity.z = new_hvel.z
 	
 
-	character.velocity.x = corrected_vel.x
-	character.velocity.z = corrected_vel.z
-	
 # drifting becomes more effective at higher speeds
 func _scale_drift_yaw_to_speed(character: Character, delta) -> float:
 	var starting_yaw_rate := 1.0 # radians/sec when barely carving
 	var max_yaw_rate      := 1.8 # radians/sec when fully carving
 	var min_carve_frac    := 0.2 
-	var hvel      = Vector3(character.velocity.x, 0, character.velocity.z)
+	var hvel = character.get_hvel(character)
 	var speed_frac = clamp(hvel.length() / character.top_speed, 0.0, 1.0)
 	var carve_scale = lerp(min_carve_frac, 1.0, sqrt(speed_frac))
 	var out_yaw_rate = lerp(starting_yaw_rate, max_yaw_rate, carve_scale)
@@ -131,10 +129,9 @@ func _scale_yaw_to_input(character: Character, delta, max_yaw, dir):
 	
 	character.rotation.y += dir * applied_yaw * delta
 	
-
 var drift_vel_blend := 5
 func _apply_inward_drift_velocity_blend(character, delta):
-	var hvel = Vector3(character.velocity.x, 0, character.velocity.z)
+	var hvel = character.get_hvel(character)
 	var speed = hvel.length()
 	if speed < 0.001:
 		return 
@@ -154,50 +151,44 @@ func _apply_inward_drift_velocity_blend(character, delta):
 	character.velocity.z = new_hvel.z
 
 # possible I could decompose base accel and drif tmore for better reuse
-func accelerate_drift(character: Character, delta: float):
-	var forward = character.get_forward_direction()
-	var right   = character.get_side_axis()
-	var hvel    = Vector3(character.velocity.x, 0, character.velocity.z)
+func _accelerate_drift(character: Character, delta: float) -> void:
+	var hvel = character.get_hvel(character)
+	var speed = hvel.length()
+
+	var delta_speed = character.calc_forward_accel_delta(speed, delta)
 	
-	var fwd_spd      = forward.dot(hvel)
-	var curr_lat_spd = right.dot(hvel)
-	
-	if character.input_forward:
-	
-		var delta_fwd = character.calc_forward_accel_delta(fwd_spd, delta)
-		fwd_spd += delta_fwd
-		fwd_spd = min(fwd_spd, character.top_speed)
-		character.velocity.x = forward.x * fwd_spd + right.x * curr_lat_spd
-		character.velocity.z = forward.z * fwd_spd + right.z * curr_lat_spd
+	var travel_dir = hvel / speed
+
+	character.velocity.x += travel_dir.x * delta_speed
+	character.velocity.z += travel_dir.z * delta_speed
 
 
-func decelerate_drift(character: Character, delta: float) -> void:
+func _decelerate_drift(character: Character, delta: float) -> void:
 	var _deceleration_rate := 10.0
 	
 	var side = character.get_side_axis()
 	var forward = character.get_forward_direction()
 	forward.y = 0
 	forward = forward.normalized()
-	
 
-	var hvel = Vector3(character.velocity.x, 0, character.velocity.z)
+	var hvel = character.get_hvel(character)
 	var speed = hvel.length()
 
-	if character.input_backward:
-		var decel_amt = min(_deceleration_rate * delta, speed)
+	var decel_amt = min(_deceleration_rate * delta, speed)
 
-		var dir = hvel.normalized()
-		var new_speed = speed - decel_amt
-		
-		var new_hvel = dir * new_speed
-
-		character.velocity.x = new_hvel.x
-		character.velocity.z = new_hvel.z
-		
-func exit_at_10_mph(character: Character):
-	var hvel = Vector3(character.velocity.x, 0, character.velocity.z)
-	var mph = hvel.length() * 2.23694
+	var dir = hvel.normalized()
+	var new_speed = speed - decel_amt
 	
-	if mph <= 10:
-		return GroundState.new()
+	var new_hvel = dir * new_speed
+
+	character.velocity.x = new_hvel.x
+	character.velocity.z = new_hvel.z
+
+# probably a slightly unessecary guard given i dont bleed drift speed
+# does guard for people trying to deccel tho so screw it
+func _exit_at_10_mph(character: Character):
+	var mph = character.get_mph(character)
+	
+	if mph <= 20:
+		Input.action_release("jump_drift")
 		

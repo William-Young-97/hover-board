@@ -1,7 +1,7 @@
 [gd_scene load_steps=6 format=3 uid="uid://ddd6dpxasgawl"]
 
 [ext_resource type="Script" uid="uid://dgnmkh4uwid4o" path="res://character_script.gd" id="1_yvgsq"]
-[ext_resource type="PackedScene" uid="uid://c4eddbn7u1bf7" path="res://board.glb" id="2_g28gv"]
+[ext_resource type="PackedScene" uid="uid://c4eddbn7u1bf7" path="res://models/player/hover_board.glb" id="2_g28gv"]
 [ext_resource type="Script" uid="uid://fahl3lw5jnxo" path="res://camera_pivot.gd" id="3_hqtel"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_colhj"]

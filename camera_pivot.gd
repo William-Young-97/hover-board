@@ -17,4 +17,3 @@ func _process(delta):
 	_camera_yaw = lerp_angle(_camera_yaw, target_yaw, smoothing_speed * delta)
 	# apply
 	global_rotation.y = _camera_yaw
-	

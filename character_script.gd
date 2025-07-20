@@ -28,7 +28,7 @@ func _ready():
 
 func _physics_process(delta: float) -> void:
 	# DEBUGS
-	#print(current_state.state_name)
+	print(current_state.state_name)
 	# print(Engine.get_frames_per_second())
 	# CODE
 	_triggers = _handle_inputs()
@@ -72,7 +72,11 @@ func _handle_inputs() -> Array:
 	
 	# assuming jump is held AND state = jump (on trig only matches for jump state no other)
 	# and we get a dir input we can start drift
-	if input_drift_held and (input_left or input_right):
+	# like most threshold should add visual and audio to show failure
+	# this can be done by emiting a signal here
+	var drift_entry_threshhold = 20
+	if input_drift_held and (input_left or input_right) \
+	and self.get_mph(self) > drift_entry_threshhold:
 			_out.append(Triggers.Actions.START_DRIFT)
 
 	if input_drift_release:
@@ -81,11 +85,8 @@ func _handle_inputs() -> Array:
 	return _out
 
 func accelerate(delta: float) -> void:
-	var hvel = Vector3(velocity.x, 0, velocity.z)
+	var hvel = self.get_hvel(self)
 	var forward = get_forward_direction()
-	forward.y = 0
-	forward = forward.normalized()
-	
 	# project hvel onto that forward axis to get current forward speed
 	var curr_fwd_spd = forward.dot(hvel)
 
@@ -112,9 +113,7 @@ var _top_reverse_speed := 7.5
 # could decompose this think about reuablility in drift for this and accel
 func decelerate(delta: float) -> void:
 	var forward_direction = get_forward_direction()
-	forward_direction.y = 0
-	forward_direction = forward_direction.normalized() 
-	var hvel    = Vector3(velocity.x, 0, velocity.z)
+	var hvel = self.get_hvel(self) 
 	var curr_spd = hvel.length()
 	var signed_spd = hvel.dot(forward_direction)  # +ve → forward, -ve → backward
 
@@ -196,7 +195,6 @@ func steering(delta: float, input_turn: float) -> void:
 	rotate_y(actual_turn)
 	velocity = velocity.rotated(Vector3.UP, actual_turn)
 
-
 # gravity
 func apply_character_gravity(delta: float) -> void:
 	if not is_grounded():
@@ -231,7 +229,7 @@ func boost():
 # UTILS
 
 func horizontal_clamp():
-	var hvel = Vector3(velocity.x, 0, velocity.z)
+	var hvel = self.get_hvel(self)
 	if hvel.length() > top_speed:
 		hvel = hvel.normalized() * top_speed
 		velocity.x = hvel.x
@@ -296,11 +294,14 @@ func step_angle(current: float, target: float, max_step: float) -> float:
 
 func get_forward_direction() -> Vector3:
 	# the board’s “nose” is –Z in its local basis
-	return -global_transform.basis.z.normalized()
+	var forward = -global_transform.basis.z.normalized()
+	forward.y = 0
+	return forward.normalized()
 	
-func get_horizontal_speed() -> float:
-	var hvel := Vector3(velocity.x, 0, velocity.z)
-	return hvel.length()
+# check if i need this
+#func get_horizontal_speed() -> float:
+	#var hvel := self.get_hvel(self)
+	#return hvel.length()
 
 func get_side_axis() -> Vector3:
 	# basis.x is the local +X axis in world coords
@@ -310,3 +311,10 @@ func clear_lateral_velocity():
 	var side = get_side_axis()
 	var lat = velocity.dot(side)
 	velocity -= side * lat
+	
+func get_mph(character: Character):
+	var hvel = self.get_hvel(self)
+	return hvel.length() * 2.23694
+
+func get_hvel(character: Character):
+	return Vector3(character.velocity.x, 0, character.velocity.z)

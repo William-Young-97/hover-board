@@ -4,6 +4,7 @@
 
 [node name="UI" type="CanvasLayer"]
 script = ExtResource("1_fyqef")
+player_path = null
 
 [node name="SpeedLabel" type="RichTextLabel" parent="."]
 offset_left = 10.0

@@ -1,15 +1,13 @@
 extends CanvasLayer
-var _hoverboard: CharacterBody3D
+@export var player_path: NodePath
+@onready var _player: Character = get_node(player_path).get_child(0)
 var _speed_label: RichTextLabel
 
 func _ready():
-	var boards = get_tree().get_nodes_in_group("hoverboard")
-	_hoverboard = boards[0]
 	_speed_label = $SpeedLabel
 	
 
 func _process(delta):
-	if _hoverboard and _speed_label:
-		var hvel = Vector3(_hoverboard.velocity.x, 0, _hoverboard.velocity.z)
-		var mph = hvel.length() * 2.23694
+	if _player and _speed_label:
+		var mph = _player.get_mph(_player)
 		_speed_label.text = "%0.2f mph" % mph
