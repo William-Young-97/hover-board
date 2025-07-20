@@ -9,7 +9,7 @@ var state_name = "jump_rotation"
 var drift_dir = 0
 var bank_target_yaw := 0.0
 var bank_speed := 4.0 # radians/sec
-const default_drift_angle := deg_to_rad(15)
+const default_drift_angle := deg_to_rad(30)
 
 func enter(character: Character, delta):
 	if character.input_left:

@@ -18,6 +18,7 @@ var _triggers := []
 
 var base_jump_yaw = 0.0
 var top_speed := 50.0  # used in acceleration; steering; hclamp; tend to zero
+
 var left_drift = false
 var right_drift = false
 
