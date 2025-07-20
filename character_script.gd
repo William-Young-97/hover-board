@@ -28,10 +28,7 @@ func _ready():
 func _physics_process(delta: float) -> void:
 	# DEBUGS
 	#print(current_state.state_name)
-
-
 	# print(Engine.get_frames_per_second())
-
 	# CODE
 	_triggers = _handle_inputs()
 	# current_state react to each trigger
@@ -110,7 +107,8 @@ func calc_forward_accel_delta(curr_fwd_spd: float, delta: float) -> float:
 # backward acceleration
 var _deceleration_rate := 10.0
 var _top_reverse_speed := 7.5
-		
+
+# could decompose this think about reuablility in drift for this and accel
 func decelerate(delta: float) -> void:
 	var forward_direction = get_forward_direction()
 	forward_direction.y = 0
