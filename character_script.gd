@@ -16,8 +16,8 @@ var input_drift_release := false
 var input_turn := 0.0
 var _triggers := []
 
-# carries between jump -> jrot -> drift States
-var base_jump_yaw := 0.0
+var base_jump_yaw = 0.0
+var top_speed := 50.0  # used in acceleration; steering; hclamp; tend to zero
 var left_drift = false
 var right_drift = false
 
@@ -28,8 +28,8 @@ func _ready():
 func _physics_process(delta: float) -> void:
 	# DEBUGS
 	#print(current_state.state_name)
-	print("current rotation: ", rotation.y)
-	print("base jump yaw: ", base_jump_yaw)
+
+
 	# print(Engine.get_frames_per_second())
 
 	# CODE
@@ -98,11 +98,11 @@ func accelerate(delta: float) -> void:
 
 # forward acceleration
 var _max_acceleration := 8.0
-var _top_speed := 50.0  # used in acceleration; steering; hclamp; tend to zero
+
 
 func calc_forward_accel_delta(curr_fwd_spd: float, delta: float) -> float:
 	# how far along top speed we are
-	var frac = clamp(curr_fwd_spd / _top_speed, 0.0, 1.0)
+	var frac = clamp(curr_fwd_spd / top_speed, 0.0, 1.0)
 	# quadratic taper: big accel at low speeds, zero at top
 	var strength = _max_acceleration * (1.0 - frac * frac)
 	return strength * delta
@@ -139,7 +139,7 @@ func tend_speed_to_zero(delta: float) -> void:
 	var signed_spd = horizontal_velocity.dot(forward_direction)
 	
 	if signed_spd > 0.0:
-		var speed_frac = clamp(curr_spd / _top_speed, 0.0, 1.0)
+		var speed_frac = clamp(curr_spd / top_speed, 0.0, 1.0)
 		var decel = _deceleration_rate * speed_frac * delta
 		decel = min(decel, curr_spd)
 		var drag_dir = -horizontal_velocity.normalized()
@@ -153,8 +153,8 @@ func tend_speed_to_zero(delta: float) -> void:
 		velocity += drag_dir * decel
 		
 # turn settings
-var _max_turn_rate := 1.5
-var _turn_acceleration := 8.0
+var _max_turn_rate := 1.2
+var _turn_acceleration := 20.0
 var _turn_curve_exponent := 2.0
 var _turn_damping := 10.0
 var _turn_velocity := 0.0
@@ -162,10 +162,10 @@ var _turn_velocity := 0.0
 func steering(delta: float, input_turn: float) -> void:
 	# base fractions
 	var hspeed    = Vector3(velocity.x,0,velocity.z).length()
-	var speed_frac= clamp(hspeed / _top_speed, 0.0, 1.0)
+	var speed_frac= clamp(hspeed / top_speed, 0.0, 1.0)
 
 	# min‐floor + sqrt ramp over first 40%
-	var raw       = clamp(speed_frac / 0.4, 0.0, 1.0)
+	var raw       = clamp(speed_frac / 0.5, 0.0, 1.0)
 	var min_carve = 0.2
 	var turn_scale= lerp(min_carve, 1.0, sqrt(raw))
 
@@ -198,7 +198,7 @@ func steering(delta: float, input_turn: float) -> void:
 	velocity = velocity.rotated(Vector3.UP, actual_turn)
 
 # how is this going to interact with our gravity and airbourne function
-const _jump_strength := 2
+const _jump_strength := 1.5
 func jump() -> void:
 	velocity += Vector3(0, _jump_strength ,0)
 
@@ -237,8 +237,8 @@ func boost():
 
 func horizontal_clamp():
 	var hvel = Vector3(velocity.x, 0, velocity.z)
-	if hvel.length() > _top_speed:
-		hvel = hvel.normalized() * _top_speed
+	if hvel.length() > top_speed:
+		hvel = hvel.normalized() * top_speed
 		velocity.x = hvel.x
 		velocity.z = hvel.z
 
