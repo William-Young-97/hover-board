@@ -5,7 +5,7 @@ var state_name = "manual_jump"
 
 func enter(character: Character, delta):
 	# jump off the ground and remember starting yaw for JumpRotatationState
-	character.jump()                  
+	jump(character)                  
 	character.base_jump_yaw = character.rotation.y
 	
 func on_trigger(character: Character, trigger: int):
@@ -24,3 +24,8 @@ func update(character: Character, delta: float) -> State:
 			return GroundState.new()
 #
 	return null
+	
+# how is this going to interact with our gravity and airbourne function
+const _jump_strength := 1.3
+func jump(character: Character) -> void:
+	character.velocity += Vector3(0, _jump_strength ,0)

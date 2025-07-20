@@ -197,10 +197,6 @@ func steering(delta: float, input_turn: float) -> void:
 	rotate_y(actual_turn)
 	velocity = velocity.rotated(Vector3.UP, actual_turn)
 
-# how is this going to interact with our gravity and airbourne function
-const _jump_strength := 1.5
-func jump() -> void:
-	velocity += Vector3(0, _jump_strength ,0)
 
 # gravity
 func apply_character_gravity(delta: float) -> void:
