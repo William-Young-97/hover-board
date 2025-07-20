@@ -27,7 +27,9 @@ func _ready():
 
 func _physics_process(delta: float) -> void:
 	# DEBUGS
-	# print(current_state.state_name)
+	#print(current_state.state_name)
+	print("current rotation: ", rotation.y)
+	print("base jump yaw: ", base_jump_yaw)
 	# print(Engine.get_frames_per_second())
 
 	# CODE

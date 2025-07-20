@@ -3,7 +3,7 @@ extends Node3D
 @export var player_path: NodePath
 @onready var _player = get_node(player_path) as Character
 
-@export var smoothing_speed := 6.0   # tweak this higher → snappier, lower → more floaty
+@export var smoothing_speed := 4.0   # tweak this higher → snappier, lower → more floaty
 var _camera_yaw := 0.0               # remember the last smoothed yaw
 
 # works for now but obviously coupled to velocity so I am manageing vel around it

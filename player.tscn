@@ -27,8 +27,8 @@ script = ExtResource("3_hqtel")
 player_path = NodePath("../..")
 
 [node name="SpringArm3D" type="SpringArm3D" parent="PlayerController/Board/CameraPivot"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.55, 1.5)
-spring_length = 0.3
+transform = Transform3D(1, 0, 0, 0, 0.987688, 0.156434, 0, -0.156434, 0.987688, 0, 0.669053, 1.54804)
+spring_length = 0.4
 
 [node name="SprungCamera" type="Camera3D" parent="PlayerController/Board/CameraPivot/SpringArm3D"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
