@@ -1,6 +1,7 @@
 extends State
 class_name ManualJumpState
 
+var terrain_interactions: TerrainInteractions
 var state_name = "manual_jump"
 
 func enter(character: Character, delta):
@@ -15,17 +16,17 @@ func on_trigger(character: Character, trigger: int):
 			return JumpRotatationState.new()
 	
 func update(character: Character, delta: float) -> State:
-	character.apply_character_gravity(delta)
-	character.move_and_slide()
-	character.apply_hover(delta)
-
+	# hack to speed up descent on jump slightly
+	var last_vel = character.velocity.y
+	if last_vel < 0:
+		character.velocity -= Vector3(0, 2.5 ,0)
 	# assuming we've landed without a dir return to grounded (trig banking)
-	if character.is_grounded() and character.velocity.y <= 0.0:
+	if terrain_interactions.is_grounded(character) and character.velocity.y <= 0.0:
 			return GroundState.new()
 #
 	return null
 	
 # how is this going to interact with our gravity and airbourne function
-const _jump_strength := 1.3
+const _jump_strength := 1.5
 func jump(character: Character) -> void:
 	character.velocity += Vector3(0, _jump_strength ,0)

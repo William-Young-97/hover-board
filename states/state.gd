@@ -2,6 +2,8 @@ extends Node
 
 class_name State
 
+var _terrain_interactions: TerrainInteractions
+
 func enter(character: Character, delta):
 	pass
 

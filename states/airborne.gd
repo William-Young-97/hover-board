@@ -2,6 +2,7 @@ extends State
 class_name AirborneState
 
 var state_name = "airborne"
+var terrain_interactions: TerrainInteractions
 
 func enter(character: Character, delta):
 	pass
