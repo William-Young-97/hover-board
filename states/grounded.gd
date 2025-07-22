@@ -1,35 +1,52 @@
 extends State
 class_name GroundState
 
-var terrain_interactions: TerrainInteractions
 var state_name = "grounded"
-	
+var _did_movement_input := false
+var _input_turn := 0.0
+
+func enter(character: Character, delta:):
+	_visual_roll_controller.board_roll_amount = 0.3
+
 func update(character: Character, delta: float) -> void:	
-	if character.input_forward:
-		self.accelerate(character, delta)
-	elif character.input_backward:
-		self.decelerate(character, delta)
-	else:
-		self.tend_speed_to_zero(character, delta)
+	if not _did_movement_input:
+		tend_speed_to_zero(character, delta)
+	_did_movement_input = false
 
-	self.steering(character, delta)
-
-func on_trigger(character: Character, trigger: int) -> State:
+func on_trigger(character: Character, trigger: int, delta) -> State:
 	match trigger:
-		Triggers.Actions.JUMP:
-			if terrain_interactions.is_grounded(character):
+		Events.Trigger.FORWARD:
+			self.accelerate(character, delta)
+			_did_movement_input = true
+		Events.Trigger.BACKWARD:
+			self.decelerate(character, delta)
+			_did_movement_input = true
+		Events.Trigger.LEFT:
+			self._input_turn += 1.0
+			_visual_roll_controller.direction += 1
+			self.steering(character, delta)
+			self._input_turn = 0.0
+		Events.Trigger.RIGHT:
+			self._input_turn -= 1.0
+			_visual_roll_controller.direction -= 1
+			self.steering(character, delta)
+			self._input_turn = 0.0
+		Events.Trigger.JUMP_PRESS:
+			if _terrain_interactions.is_grounded():
 				return ManualJumpState.new()
 	return null
 
 func accelerate(character: Character, delta: float) -> void:
-	var hvel = HelperFunctions.get_hvel(character)
-	var forward = HelperFunctions.get_forward_direction(character)
-	# project hvel onto that forward axis to get current forward speed
+	var forward = _terrain_interactions.get_forward_direction_relative_to_surface(character)
+
+	# 4) Figure out current speed along that forward
+	var hvel = _terrain_interactions.get_hvel_relative_to_surface(character)
 	var curr_fwd_spd = forward.dot(hvel)
 
-	# ask the helper how much to change speed this frame
+	# 5) Compute your accel delta as before
 	var delta_fwd = HelperFunctions.calc_forward_accel_delta(character, curr_fwd_spd, delta)
 
+	# 6) Apply it along the tangent
 	character.velocity += forward * delta_fwd
 
 # backward acceleration
@@ -38,8 +55,8 @@ var _top_reverse_speed := 7.5
 
 # could decompose this think about reuablility in drift for this and accel
 func decelerate(character: Character, delta: float) -> void:
-	var forward_direction = HelperFunctions.get_forward_direction(character)
-	var hvel = HelperFunctions.get_hvel(character) 
+	var forward_direction = _terrain_interactions.get_forward_direction_relative_to_surface(character)
+	var hvel = _terrain_interactions.get_hvel_relative_to_surface(character) 
 	var curr_spd = hvel.length()
 	var signed_spd = hvel.dot(forward_direction)  # +ve → forward, -ve → backward
 
@@ -57,8 +74,8 @@ func decelerate(character: Character, delta: float) -> void:
 			character.velocity += forward_direction * -add
 		
 func tend_speed_to_zero(character: Character, delta: float) -> void:
-	var forward_direction = HelperFunctions.get_forward_direction(character)
-	var horizontal_velocity := HelperFunctions.get_hvel(character)
+	var forward_direction = _terrain_interactions.get_forward_direction_relative_to_surface(character)
+	var horizontal_velocity = _terrain_interactions.get_hvel_relative_to_surface(character)
 	var curr_spd = horizontal_velocity.length()
 	var signed_spd = horizontal_velocity.dot(forward_direction)
 	
@@ -85,7 +102,7 @@ var _turn_velocity := 0.0
 		
 func steering(character: Character, delta: float) -> void:
 	# base fractions
-	var hspeed = HelperFunctions.get_hvel(character).length()
+	var hspeed = _terrain_interactions.get_hvel_relative_to_surface(character).length()
 	var speed_frac= clamp(hspeed / character.top_speed, 0.0, 1.0)
 
 	# min‐floor + sqrt ramp over first 40%
@@ -94,13 +111,13 @@ func steering(character: Character, delta: float) -> void:
 	var turn_scale= lerp(min_carve, 1.0, sqrt(raw)) #pow(raw, 2.0))
 
 	# carve‐acceleration logic 
-	var target_rate = character.input_turn * _max_turn_rate
+	var target_rate = self._input_turn * _max_turn_rate
 
 	var turn_frac = abs(_turn_velocity) / _max_turn_rate
 	turn_frac = clamp(turn_frac, 0.0, 1.0)
 	var turn_accel_scale = 1.0 - pow(turn_frac, _turn_curve_exponent)
 
-	if character.input_turn == 0.0:
+	if self._input_turn == 0.0:
 		# bleed‐off
 		_turn_velocity = lerp(_turn_velocity, 0.0, _turn_damping * delta)
 	else:
@@ -116,7 +133,12 @@ func steering(character: Character, delta: float) -> void:
 
 	_turn_velocity = clamp(_turn_velocity, -_max_turn_rate, _max_turn_rate)
 
-	# carve body by a scaled amount
+	# 1) Compute the raw turn angle
 	var actual_turn = _turn_velocity * turn_scale * delta
-	character.rotate_y(actual_turn)
-	character.velocity = character.velocity.rotated(Vector3.UP, actual_turn)
+
+	# 2) Get & orient the surface normal “upwards”
+	var n = _terrain_interactions.get_y_relative_to_surface()
+	# 3) Rotate the board **around** that normal
+	#    (replaces rotate_y and the global‐UP velocity rotation)
+	character.rotate_object_local(n, actual_turn)
+	character.velocity = character.velocity.rotated(n, actual_turn)

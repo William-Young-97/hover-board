@@ -1,8 +1,6 @@
 extends State
 class_name DriftState
 
-var terrain_interactions: TerrainInteractions
-
 # TODO
 # guard against players dobule drifting in the same direction
 # PROBABLY NEEDS TO HAPPEN IN INPUT CONTROLLER
@@ -27,9 +25,9 @@ func update(character: Character, delta) -> void:
 	if character.input_backward:
 		_decelerate_drift(character, delta)
 		
-func on_trigger(character: Character, trigger: int) -> State:
+func on_trigger(character: Character, trigger: int, delta: float) -> State:
 	match trigger:
-		Triggers.Actions.END_DRIFT:
+		Events.Trigger.END_DRIFT:
 			character.left_drift = false
 			character.right_drift = false
 			return GroundState.new()
@@ -70,12 +68,11 @@ func _apply_drift(character: Character, delta):
 			
 func _apply_outward_drift(character: Character, drift_dir: int, delta: float) -> void:
 	var shift_rate := 0.05 # fraction of forward speed per second to reassign
-	var forward = HelperFunctions.get_forward_direction(character)
-	forward.y = 0; forward = forward.normalized()
+	var forward =  _terrain_interactions.get_forward_direction_relative_to_surface(character)
 	var side = HelperFunctions.get_side_axis(character)
 
 	# split current forward & lateral speeds
-	var hvel = HelperFunctions.get_hvel(character)
+	var hvel = _terrain_interactions.get_hvel_relative_to_surface(character)
 	var fwd_spd = forward.dot(hvel)
 	var lat_spd = side.dot(hvel)
 
@@ -96,7 +93,7 @@ func _scale_drift_yaw_to_speed(character: Character, delta) -> float:
 	var starting_yaw_rate := 1.0 # radians/sec when barely carving
 	var max_yaw_rate      := 1.9 # radians/sec when fully carving
 	var min_carve_frac    := 0.2 
-	var hvel = HelperFunctions.get_hvel(character)
+	var hvel = _terrain_interactions.get_hvel_relative_to_surface(character)
 	var speed_frac = clamp(hvel.length() / character.top_speed, 0.0, 1.0)
 	var carve_scale = lerp(min_carve_frac, 1.0, sqrt(speed_frac))
 	var out_yaw_rate = lerp(starting_yaw_rate, max_yaw_rate, carve_scale)
@@ -128,47 +125,51 @@ func _scale_yaw_to_input(character: Character, delta, max_yaw,  drift_dir):
 	
 var drift_vel_blend := 5
 func _apply_inward_drift_velocity_blend(character, delta):
-	var hvel = HelperFunctions.get_hvel(character)
+	var hvel = _terrain_interactions.get_hvel_relative_to_surface(character)
 	var speed = hvel.length()
 	if speed < 0.001:
 		return 
 
 	var curr_yaw   = atan2(hvel.x, hvel.z)
-	var target_yaw = character.rotation.y   # ew nose heading
+	var target_yaw = character.rotation.y   # new nose heading
 
 	# blend toward the nose—scaled by delta so it's frame‑rate independent
 	var blend_amount = clamp(drift_vel_blend * delta, 0, 1)
 	var new_yaw = lerp_angle(curr_yaw, target_yaw, blend_amount)
 
-	# rebuild horizontal velocity at the same speed
-	var dir = Vector3( sin(new_yaw), 0, cos(new_yaw) )
-	var new_hvel = dir * speed
+		# 1) get your flat, yaw‐only direction:
+	var flat_dir = Vector3( sin(new_yaw), 0, cos(new_yaw) ).normalized()
 
+	# 2) fetch & orient the surface normal upward:
+	var n = _terrain_interactions.get_y_relative_to_surface()
+
+	# 3) project flat_dir onto the plane (i.e. remove any component along n):
+	var dir = (flat_dir - n * flat_dir.dot(n)).normalized()
+
+	# 4) re‑apply speed:
+	var new_hvel = dir * speed
 	character.velocity.x = new_hvel.x
+	character.velocity.y = character.velocity.y  # preserve any vertical motion
 	character.velocity.z = new_hvel.z
 
 # possible I could decompose base accel and drif tmore for better reuse
 func _accelerate_drift(character: Character, delta: float) -> void:
-	var hvel = HelperFunctions.get_hvel(character)
+	var hvel = _terrain_interactions.get_hvel_relative_to_surface(character)
 	var speed = hvel.length()
 
 	var delta_speed = HelperFunctions.calc_forward_accel_delta(character, speed, delta)
 	
 	var travel_dir = hvel / speed
 
-	character.velocity.x += travel_dir.x * delta_speed
-	character.velocity.z += travel_dir.z * delta_speed
-
+	character.velocity += travel_dir * delta_speed
 
 func _decelerate_drift(character: Character, delta: float) -> void:
 	var _deceleration_rate := 10.0
 	
 	var side = HelperFunctions.get_side_axis(character)
-	var forward = HelperFunctions.get_forward_direction(character)
-	forward.y = 0
-	forward = forward.normalized()
+	var forward = _terrain_interactions.get_forward_direction_relative_to_surface(character)
 
-	var hvel = HelperFunctions.get_hvel(character)
+	var hvel = _terrain_interactions.get_hvel_relative_to_surface(character)
 	var speed = hvel.length()
 
 	var decel_amt = min(_deceleration_rate * delta, speed)
@@ -178,8 +179,7 @@ func _decelerate_drift(character: Character, delta: float) -> void:
 	
 	var new_hvel = dir * new_speed
 
-	character.velocity.x = new_hvel.x
-	character.velocity.z = new_hvel.z
+	character.velocity = new_hvel
 
 # probably a slightly unessecary guard given i dont bleed drift speed
 # does guard for people trying to deccel tho so screw it

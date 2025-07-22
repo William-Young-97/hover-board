@@ -1,0 +1,20 @@
+extends Node
+class_name Events
+
+enum Trigger {
+	FORWARD,
+	BACKWARD,
+	LEFT,
+	RIGHT,
+	JUMP_PRESS,
+	JUMP_HELD,
+	JUMP_RELEASE,
+	
+	JUMP,
+	START_BANK,
+	START_DRIFT,
+	END_DRIFT,
+	CORNER_FALL,
+	AIRBORNE,
+	LANDED,
+}
