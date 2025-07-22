@@ -24,7 +24,7 @@ func _ready():
 	current_basis = _character.global_transform.basis
 	
 func _physics_process(delta: float) -> void:
-	print(_character.current_state.state_name)
+	# print(_character.current_state.state_name)
 	#print("is grounded check: ", is_grounded())
 	#print("CHAR ROTATION: ", _character.rotation)
 	#print("CHAR basis: ", _character.basis)

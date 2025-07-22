@@ -55,7 +55,6 @@ func load_and_configure_next_state(next_state: State, delta: float):
 		current_state.enter(self, delta)
 
 func _handle_inputs():
-	
 	input_forward  = Input.is_action_pressed("forward")
 	input_backward = Input.is_action_pressed("back")
 	input_left = Input.is_action_pressed("left")
@@ -69,7 +68,7 @@ var _was_partially_grounded := false
 
 func _handle_events() -> Array:
 	var _events := []
-	
+	# input event transitions
 	if input_forward:
 		_events.append(Events.Trigger.FORWARD)
 	if input_backward:
@@ -85,21 +84,21 @@ func _handle_events() -> Array:
 	if input_jump_released:
 		_events.append(Events.Trigger.JUMP_RELEASE)
 	
-	# 2) environment‑based transitions
+	# environment‑based transitions
 	var _grounded := _terrain_interactions.is_grounded()
 	if _grounded and not _was_grounded:
 		_events.append(Events.Trigger.LANDED)
 	if not _grounded and _was_grounded:
 		_events.append(Events.Trigger.AIRBORNE)
-		
 	var _partially_grounded := _terrain_interactions.is_partially_grounded()
 	if _partially_grounded and not _was_partially_grounded:
 		_events.append(Events.Trigger.CORNER_FALL)
 
-	# 4) stash for next frame
+	# stash for next frame
 	_was_grounded = _grounded
 	_was_partially_grounded = _partially_grounded
-	
+	#print(_events)
+	#print(current_state.state_name)
 	return _events
 
 # UTILS

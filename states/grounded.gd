@@ -39,14 +39,14 @@ func on_trigger(character: Character, trigger: int, delta) -> State:
 func accelerate(character: Character, delta: float) -> void:
 	var forward = _terrain_interactions.get_forward_direction_relative_to_surface(character)
 
-	# 4) Figure out current speed along that forward
+	# Figure out current speed along  forward
 	var hvel = _terrain_interactions.get_hvel_relative_to_surface(character)
 	var curr_fwd_spd = forward.dot(hvel)
 
-	# 5) Compute your accel delta as before
+	# Compute accel delta as before
 	var delta_fwd = HelperFunctions.calc_forward_accel_delta(character, curr_fwd_spd, delta)
 
-	# 6) Apply it along the tangent
+	# Apply it along the tangent
 	character.velocity += forward * delta_fwd
 
 # backward acceleration
@@ -133,12 +133,12 @@ func steering(character: Character, delta: float) -> void:
 
 	_turn_velocity = clamp(_turn_velocity, -_max_turn_rate, _max_turn_rate)
 
-	# 1) Compute the raw turn angle
+	# Compute the raw turn angle
 	var actual_turn = _turn_velocity * turn_scale * delta
 
-	# 2) Get & orient the surface normal “upwards”
+	# Get & orient the surface normal “upwards”
 	var n = _terrain_interactions.get_y_relative_to_surface()
-	# 3) Rotate the board **around** that normal
+	# Rotate the board **around** that normal
 	#    (replaces rotate_y and the global‐UP velocity rotation)
 	character.rotate_object_local(n, actual_turn)
 	character.velocity = character.velocity.rotated(n, actual_turn)

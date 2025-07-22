@@ -17,17 +17,16 @@ func exit(character: Character, delta) -> void:
 	# could add a timer here and when it hits 2 secs
 	# allow them to drift in the same dir again
 func update(character: Character, delta) -> void:
-	_exit_at_10_mph(character)
+	_exit_at_20_mph(character)
 	_apply_drift(character, delta)
-
-	if character.input_forward:
-		_accelerate_drift(character, delta)
-	if character.input_backward:
-		_decelerate_drift(character, delta)
-		
+	
 func on_trigger(character: Character, trigger: int, delta: float) -> State:
 	match trigger:
-		Events.Trigger.END_DRIFT:
+		Events.Trigger.FORWARD:
+			self._accelerate_drift(character, delta)
+		Events.Trigger.BACKWARD:
+			self._decelerate_drift(character, delta)
+		Events.Trigger.JUMP_RELEASE:
 			character.left_drift = false
 			character.right_drift = false
 			return GroundState.new()
@@ -183,7 +182,7 @@ func _decelerate_drift(character: Character, delta: float) -> void:
 
 # probably a slightly unessecary guard given i dont bleed drift speed
 # does guard for people trying to deccel tho so screw it
-func _exit_at_10_mph(character: Character):
+func _exit_at_20_mph(character: Character):
 	var mph = HelperFunctions.get_mph(character)
 	
 	if mph <= 20:

@@ -1,5 +1,5 @@
 extends State
-class_name JumpRotatationState
+class_name JumpRotationState
 
 var state_name = "jump_rotation"
 
@@ -8,26 +8,31 @@ var bank_speed := 4.0 # radians/sec
 const default_drift_angle := deg_to_rad(20)
 
 func enter(character: Character, delta):
-	if character.input_left:
-		character.left_drift = true
-		character.drift_dir += 1
-	elif character.input_right:
-		character.right_drift = true
-		character.drift_dir -= 1
-	else:
-		character.drift_dir = 0
-	
-	# compute the absolute yaw to bank toward
-	bank_target_yaw = character.base_jump_yaw \
-	+ default_drift_angle * character.drift_dir
+	pass
 
+func exit(character: Character, delta: float):
+	pass
+	
 func on_trigger(character: Character, trigger: int, delta: float):
-	# if input_drift_held and we have a dir we bank in air
 	match trigger:
-		Events.Trigger.START_DRIFT:
-			return DriftState.new()
+		Events.Trigger.LEFT:
+			character.drift_dir = +1
+			bank_target_yaw = character.base_jump_yaw \
+							 + default_drift_angle * character.drift_dir
+		Events.Trigger.RIGHT:
+			character.drift_dir = -1
+			bank_target_yaw = character.base_jump_yaw \
+							 + default_drift_angle * character.drift_dir
 		Events.Trigger.LANDED:
-			return GroundState.new()
+			if character.input_left:
+				character.left_drift = true
+				return DriftState.new()
+			elif character.input_right:
+				character.right_drift = true
+				return DriftState.new()
+			else:
+				return GroundState.new()
+	return null
 			
 func update(character: Character, delta: float) -> State:
 	var old_yaw = character.rotation.y
@@ -38,5 +43,4 @@ func update(character: Character, delta: float) -> State:
 	)
 	var yaw_delta = new_yaw - old_yaw
 	character.rotation.y = new_yaw
-	
 	return null
