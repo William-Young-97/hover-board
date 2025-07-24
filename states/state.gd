@@ -4,6 +4,8 @@ class_name State
 
 var _terrain_interactions: TerrainInteractions
 var _visual_roll_controller: VisualRollController
+var _airborne_helper: AirborneHelper
+
 
 func enter(character: Character, delta: float):
 	pass

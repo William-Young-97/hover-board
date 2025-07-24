@@ -6,6 +6,8 @@ class_name Character
 @onready var _terrain_interactions: TerrainInteractions = get_node(terrain_interactions_path)
 @export var visual_roll_path: NodePath
 @onready var _visual_roll_controller: VisualRollController = get_node(visual_roll_path)
+@export var airborne_helper_path: NodePath
+@onready var _airborne_helper: AirborneHelper = get_node(airborne_helper_path)
 
 # state and inputs exposed
 var current_state : State = null
@@ -18,21 +20,31 @@ var input_jump_just_pressed := false
 var input_jump_held := false
 var input_jump_released := false
 
-
-
 # used across some states. I could inject them but this is easier for now
-var base_jump_yaw = 0.0
+var jumped = false
+var air_base_entry_yaw = 0.0
 var top_speed := 50.0  # used in acceleration; steering; hclamp; tend to zero
+
 var drift_dir = 0
 var left_drift = false
 var right_drift = false
 
+# fake‐physics angular velocity (radians/sec around each local axis)
+var angular_velocity: Vector3 = Vector3.ZERO
+# inertia: how much the board resists rotation
+var inertia := 1.0
+var mass := 75.0 
+
 func _ready():
+	# inject *this* character into the roll controller
+	_visual_roll_controller.character = self
 	current_state = GroundState.new()
 	# inject our terrain_interaction node/script at start 
 	current_state._terrain_interactions = _terrain_interactions
 	current_state._visual_roll_controller = _visual_roll_controller
+	current_state._airborne_helper = _airborne_helper
 	# if ever have an `enter()` callback (for groundstate), call it here
+	angular_velocity = Vector3.ZERO
 
 func _physics_process(delta: float) -> void:
 	_handle_inputs()
@@ -52,6 +64,7 @@ func load_and_configure_next_state(next_state: State, delta: float):
 		# inject every state
 		current_state._terrain_interactions = _terrain_interactions
 		current_state._visual_roll_controller = _visual_roll_controller
+		current_state._airborne_helper = _airborne_helper
 		current_state.enter(self, delta)
 
 func _handle_inputs():
@@ -64,7 +77,7 @@ func _handle_inputs():
 	input_jump_released = Input.is_action_just_released("jump_drift")
 
 var _was_grounded := false
-var _was_partially_grounded := false
+var _was_airborne := false
 
 func _handle_events() -> Array:
 	var _events := []
@@ -83,38 +96,11 @@ func _handle_events() -> Array:
 		_events.append(Events.Trigger.JUMP_HELD)
 	if input_jump_released:
 		_events.append(Events.Trigger.JUMP_RELEASE)
-	
+
 	# environment‑based transitions
-	var _grounded := _terrain_interactions.is_grounded()
-	if _grounded and not _was_grounded:
+	if _terrain_interactions.should_land(_terrain_interactions.grays):
 		_events.append(Events.Trigger.LANDED)
-	if not _grounded and _was_grounded:
+	
+	if _terrain_interactions.should_leave_ground(_terrain_interactions.grays):
 		_events.append(Events.Trigger.AIRBORNE)
-	var _partially_grounded := _terrain_interactions.is_partially_grounded()
-	if _partially_grounded and not _was_partially_grounded:
-		_events.append(Events.Trigger.CORNER_FALL)
-
-	# stash for next frame
-	_was_grounded = _grounded
-	_was_partially_grounded = _partially_grounded
-	#print(_events)
-	#print(current_state.state_name)
 	return _events
-
-# UTILS
-## airtime tracking
-#var _in_air := false
-#var current_air_time := 0.0
-#var last_air_time := 0.0
-#
-#func _update_air_time(delta):
-	#var grounded = terrain_interactions.is_hover_contact()()
-	#if not grounded:
-		## we’re airborne: accumulate
-		#current_air_time += delta
-		#_in_air = true
-	#elif _in_air:
-		## we just landed: record and reset
-		#last_air_time = current_air_time
-		#current_air_time = 0.0
-		#_in_air = false

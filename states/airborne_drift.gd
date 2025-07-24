@@ -1,27 +1,23 @@
 extends State
-class_name DriftState
+class_name AirborneDriftState
 
-# TODO
-# guard against players dobule drifting in the same direction
-# can also penalise it in my boost sytstem as it counts as not following a boost through
-
-
-var state_name = "drifting"
+var state_name = "airborne_drift"
 var _inward_drift_timer = 0
 var hf = HelperFunctions.new()
 
-func enter(character: Character, delta) -> void:
+func enter(character: Character, delta: float) -> void:
 	_visual_roll_controller.board_roll_amount = 0.8
-	print("Entering Drift")
+	print("Entering Airborne Drift")
 	
-func exit(character: Character, delta) -> void:
+func exit(character: Character, delta: float) -> void:
 	pass
 
-func update(character: Character, delta) -> void:
-	_terrain_interactions.enforce_hover_floor(character,  _terrain_interactions.grays)
-	_terrain_interactions.apply_leveling_slerp(character, _terrain_interactions.grays, delta)
-	_terrain_interactions.slide_on_slopes(character, _terrain_interactions.grays)
+func update(character: Character, delta: float) -> void:
+	_terrain_interactions.enforce_hover_floor(character, _terrain_interactions.grays)
+	_terrain_interactions.apply_leveling_slerp(character, _terrain_interactions.arays, delta)
+	_terrain_interactions.slide_on_slopes(character, _terrain_interactions.arays)
 	character.move_and_slide()
+	_terrain_interactions.apply_gravity(delta)
 	#_exit_at_20_mph(character)
 	_apply_drift(character, delta)
 	
@@ -32,15 +28,17 @@ func on_trigger(character: Character, trigger: int, delta: float) -> State:
 		Events.Trigger.BACKWARD:
 			self._decelerate_drift(character, delta)
 		Events.Trigger.JUMP_RELEASE:
+			if _terrain_interactions.should_land(_terrain_interactions.grays) == false:
+				return AirborneState.new()
 			character.left_drift = false
 			character.right_drift = false
 			return GroundState.new()
-		Events.Trigger.AIRBORNE:
-			return AirborneDriftState.new()
+		Events.Trigger.LANDED:
+			return DriftState.new()
 	return null
 
 # this method will switch to handle left vs right drift
-func _apply_drift(character: Character, delta):
+func _apply_drift(character: Character, delta: float):
 	# extra guard against drift not releasing
 	if not character.input_jump_held:
 		return GroundState
@@ -76,7 +74,7 @@ func _apply_drift(character: Character, delta):
 			_apply_outward_drift(character, character.drift_dir, delta)
 		else:
 			_inward_drift_timer = 0
-#
+			
 func _apply_outward_drift(character: Character, drift_dir: int, delta: float) -> void:
 	var shift_rate := 0.05 # fraction of forward speed per second to reassign
 	var forward =  _terrain_interactions.get_forward_direction_relative_to_surface(character,  _terrain_interactions.arays)
@@ -100,7 +98,7 @@ func _apply_outward_drift(character: Character, drift_dir: int, delta: float) ->
 	
 
 # drifting becomes more effective at higher speeds
-func _scale_drift_yaw_to_speed(character: Character, delta) -> float:
+func _scale_drift_yaw_to_speed(character: Character, delta: float) -> float:
 	var starting_yaw_rate := 1.0 
 	var max_yaw_rate      := 1.9 
 	var min_carve_frac    := 0.2 
@@ -112,9 +110,7 @@ func _scale_drift_yaw_to_speed(character: Character, delta) -> float:
 	return out_yaw_rate
 	
 # build yaw based on time input held
-func _scale_yaw_to_input(character: Character, delta, max_yaw,  drift_dir):
-	# will decide later if i like having speed scaling feature of if it throws peaople off
-	# max_yaw = 1.8
+func _scale_yaw_to_input(character: Character, delta: float, max_yaw: float,  drift_dir: int):
 	var max_hold_time = 0.5
 	var starting_yaw_rate := 1.3
 	var inward_held := false
@@ -194,12 +190,3 @@ func _decelerate_drift(character: Character, delta: float) -> void:
 	var new_hvel = dir * new_speed
 
 	character.velocity = new_hvel
-
-# probably a slightly unessecary guard given i dont bleed drift speed
-# does guard for people trying to deccel tho so screw it
-func _exit_at_20_mph(character: Character):
-	var mph = HelperFunctions.get_mph(character)
-	
-	if mph <= 20:
-		Input.action_release("jump_drift")
-		

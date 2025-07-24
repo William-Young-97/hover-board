@@ -36,3 +36,16 @@ static func get_side_axis(character: Character) -> Vector3:
 
 static func get_mph(character: Character) -> float:
 	return character.velocity.length() * 2.23694
+
+static func sum(arr: Array, initial = null) -> Variant:
+	var total = 0
+	if initial != null:
+		total = initial
+	else:
+		if typeof(arr[0]) == TYPE_VECTOR3:
+			total = Vector3.ZERO
+		else:
+			total = 0
+	for v in arr:
+		total += v
+	return total
