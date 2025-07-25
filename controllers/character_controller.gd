@@ -2,12 +2,14 @@ extends CharacterBody3D
 class_name Character
 
 # since the script deals with raycasts we insance this to a 3D node to get state
+
 @export var terrain_interactions_path: NodePath
-@onready var _terrain_interactions: TerrainInteractions = get_node(terrain_interactions_path)
+@onready var _ti: TerrainInteractions = get_node(terrain_interactions_path)
 @export var visual_roll_path: NodePath
-@onready var _visual_roll_controller: VisualRollController = get_node(visual_roll_path)
-@export var airborne_helper_path: NodePath
-@onready var _airborne_helper: AirborneHelper = get_node(airborne_helper_path)
+@onready var _vrc: VisualRollController = get_node(visual_roll_path)
+#@export var drift_helper_path: NodePath
+#@onready var _dh: DriftHelper = get_node(drift_helper_path)
+
 
 # state and inputs exposed
 var current_state : State = null
@@ -29,23 +31,15 @@ var drift_dir = 0
 var left_drift = false
 var right_drift = false
 
-# fake‐physics angular velocity (radians/sec around each local axis)
-var angular_velocity: Vector3 = Vector3.ZERO
-# inertia: how much the board resists rotation
-var inertia := 1.0
-var mass := 75.0 
-
+	
 func _ready():
 	# inject *this* character into the roll controller
-	_visual_roll_controller.character = self
+	_vrc.character = self
 	current_state = GroundState.new()
-	# inject our terrain_interaction node/script at start 
-	current_state._terrain_interactions = _terrain_interactions
-	current_state._visual_roll_controller = _visual_roll_controller
-	current_state._airborne_helper = _airborne_helper
-	# if ever have an `enter()` callback (for groundstate), call it here
-	angular_velocity = Vector3.ZERO
-
+	current_state.ti = _ti
+	current_state.vrc = _vrc
+	#current_state.dh = _dh
+	
 func _physics_process(delta: float) -> void:
 	_handle_inputs()
 	var _events = _handle_events()
@@ -62,9 +56,9 @@ func load_and_configure_next_state(next_state: State, delta: float):
 		current_state.exit(self, delta)
 		current_state = next_state
 		# inject every state
-		current_state._terrain_interactions = _terrain_interactions
-		current_state._visual_roll_controller = _visual_roll_controller
-		current_state._airborne_helper = _airborne_helper
+		current_state.ti = _ti
+		current_state.vrc = _vrc
+		#DDDcurrent_state.dh = _dh
 		current_state.enter(self, delta)
 
 func _handle_inputs():
@@ -98,9 +92,9 @@ func _handle_events() -> Array:
 		_events.append(Events.Trigger.JUMP_RELEASE)
 
 	# environment‑based transitions
-	if _terrain_interactions.should_land(_terrain_interactions.grays):
+	if _ti.should_land(_ti.grays):
 		_events.append(Events.Trigger.LANDED)
 	
-	if _terrain_interactions.should_leave_ground(_terrain_interactions.grays):
+	if _ti.should_leave_ground(_ti.grays):
 		_events.append(Events.Trigger.AIRBORNE)
 	return _events

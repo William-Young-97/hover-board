@@ -1,11 +1,10 @@
-[gd_scene load_steps=8 format=3 uid="uid://ddd6dpxasgawl"]
+[gd_scene load_steps=7 format=3 uid="uid://ddd6dpxasgawl"]
 
 [ext_resource type="Script" uid="uid://dgnmkh4uwid4o" path="res://controllers/character_controller.gd" id="1_yvgsq"]
 [ext_resource type="PackedScene" uid="uid://c4eddbn7u1bf7" path="res://game-models/player/hover_board.glb" id="2_g28gv"]
 [ext_resource type="Script" uid="uid://fahl3lw5jnxo" path="res://controllers/camera/camera_pivot.gd" id="3_hqtel"]
 [ext_resource type="Script" uid="uid://buo5keux23aw2" path="res://controllers/visual_roll_controller.gd" id="4_dqkch"]
 [ext_resource type="Script" uid="uid://yh26eb202n7a" path="res://physics-helpers/terrain_interaction_controller.gd" id="5_qlg0r"]
-[ext_resource type="Script" uid="uid://bhbl1imdkvwws" path="res://physics-helpers/airborne_helper.gd" id="6_tuyoq"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_colhj"]
 size = Vector3(0.254715, 0.0462646, 1.50574)
@@ -21,14 +20,13 @@ floor_block_on_wall = false
 floor_max_angle = 0.0
 floor_snap_length = 0.0
 script = ExtResource("1_yvgsq")
-terrain_interactions_path = NodePath("TerrainInteractions")
+terrain_interactions_path = NodePath("../ScriptsNode/TerrainInteractions")
 visual_roll_path = NodePath("Board/VisualRollController")
-airborne_helper_path = NodePath("../AirborneHelper")
 
 [node name="CameraPivot" type="Node3D" parent="PlayerController"]
 script = ExtResource("3_hqtel")
 player_path = NodePath("..")
-terrain_interactions_path = NodePath("../TerrainInteractions")
+terrain_interactions_path = NodePath("../../ScriptsNode/TerrainInteractions")
 
 [node name="SpringArm3D" type="SpringArm3D" parent="PlayerController/CameraPivot"]
 transform = Transform3D(1, 0, 0, 0, 0.987688, 0.156434, 0, -0.156434, 0.987688, 0, 0.669053, 1.54804)
@@ -49,19 +47,6 @@ board_model_path = NodePath("..")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.000637174, 0.067688, 0.00518799)
 visible = false
 shape = SubResource("BoxShape3D_colhj")
-
-[node name="TerrainInteractions" type="Node3D" parent="PlayerController"]
-visible = false
-script = ExtResource("5_qlg0r")
-character_path = NodePath("..")
-gfl_path = NodePath("../RayCasts/RayCastFL")
-gfr_path = NodePath("../RayCasts/RayCastFR")
-gbl_path = NodePath("../RayCasts/RayCastBL")
-gbr_path = NodePath("../RayCasts/RayCastBR")
-afl_path = NodePath("../RayCasts/AirRayCastFL")
-afr_path = NodePath("../RayCasts/AirRayCastFR")
-abl_path = NodePath("../RayCasts/RayCastBL")
-abr_path = NodePath("../RayCasts/AirRayCastBR")
 
 [node name="ForwardRayCastFL" type="RayCast3D" parent="PlayerController"]
 transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, -0.05, 0.02, -0.65)
@@ -127,6 +112,17 @@ hit_from_inside = true
 debug_shape_custom_color = Color(1, 0, 0, 1)
 debug_shape_thickness = 1
 
-[node name="AirborneHelper" type="Node" parent="."]
-script = ExtResource("6_tuyoq")
-metadata/_custom_type_script = "uid://bhbl1imdkvwws"
+[node name="ScriptsNode" type="Node3D" parent="."]
+
+[node name="TerrainInteractions" type="Node3D" parent="ScriptsNode"]
+visible = false
+script = ExtResource("5_qlg0r")
+character_path = NodePath("../../PlayerController")
+gfl_path = NodePath("../../PlayerController/RayCasts/RayCastFL")
+gfr_path = NodePath("../../PlayerController/RayCasts/RayCastFR")
+gbl_path = NodePath("../../PlayerController/RayCasts/RayCastBL")
+gbr_path = NodePath("../../PlayerController/RayCasts/RayCastBR")
+afl_path = NodePath("../../PlayerController/RayCasts/AirRayCastFL")
+afr_path = NodePath("../../PlayerController/RayCasts/AirRayCastFR")
+abl_path = NodePath("../../PlayerController/RayCasts/RayCastBL")
+abr_path = NodePath("../../PlayerController/RayCasts/AirRayCastBR")

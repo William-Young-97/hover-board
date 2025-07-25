@@ -7,16 +7,15 @@ var _input_turn := 0.0
 const ROLL_SPEED := deg_to_rad(45)
 func enter(character: Character, delta:):
 	print("Entering Grounded")
-	_visual_roll_controller.board_roll_amount = 0.3
-
+	vrc.board_roll_amount = 0.3
 
 func update(character: Character, delta: float) -> State:
-	_terrain_interactions.enforce_hover_floor(character, _terrain_interactions.grays)
-	_terrain_interactions.apply_leveling_slerp(character,_terrain_interactions.grays, delta)
-	_terrain_interactions.slide_on_slopes(character, _terrain_interactions.grays)
+	ti.enforce_hover_floor(character, ti.grays)
+	ti.apply_leveling_slerp(character, ti.grays, delta)
+	ti.slide_on_slopes(character, ti.grays)
 	character.move_and_slide()
 	
-	_terrain_interactions.clear_lateral_velocity(character)
+	ti.clear_lateral_velocity(character)
 	
 	if not _did_movement_input:
 		tend_speed_to_zero(character, delta)
@@ -33,12 +32,12 @@ func on_trigger(character: Character, trigger: int, delta) -> State:
 			_did_movement_input = true
 		Events.Trigger.LEFT:
 			self._input_turn += 1.0
-			_visual_roll_controller.direction += 1
+			vrc.direction += 1
 			self.steering(character, delta)
 			self._input_turn = 0.0
 		Events.Trigger.RIGHT:
 			self._input_turn -= 1.0
-			_visual_roll_controller.direction -= 1
+			vrc.direction -= 1
 			self.steering(character, delta)
 			self._input_turn = 0.0
 		Events.Trigger.JUMP_PRESS:
@@ -52,7 +51,7 @@ func on_trigger(character: Character, trigger: int, delta) -> State:
 const _jump_strength := 2
 func jump(character: Character) -> void:
 	# surface normal
-	var n = _terrain_interactions.get_ground_normal(_terrain_interactions.grays)
+	var n = ti.get_ground_normal(ti.grays)
 	#  make sure it’s pointing up
 	if n.dot(Vector3.UP) < 0:
 		n = -n
@@ -62,9 +61,9 @@ func jump(character: Character) -> void:
 
 	
 func accelerate(character: Character, delta: float) -> void:
-	var forward = _terrain_interactions.get_forward_direction_relative_to_surface(character, _terrain_interactions.grays)
+	var forward = ti.get_forward_direction_relative_to_surface(character, ti.grays)
 	# current speed along  forward
-	var hvel = _terrain_interactions.get_hvel_relative_to_surface(character, _terrain_interactions.grays)
+	var hvel = ti.get_hvel_relative_to_surface(character, ti.grays)
 	var curr_fwd_spd = forward.dot(hvel)
 	# Compute accel delta
 	var delta_fwd = HelperFunctions.calc_forward_accel_delta(character, curr_fwd_spd, delta)
@@ -77,8 +76,8 @@ var _top_reverse_speed := 7.5
 
 # could decompose this think about reuablility in drift for this and accel
 func decelerate(character: Character, delta: float) -> void:
-	var forward_direction = _terrain_interactions.get_forward_direction_relative_to_surface(character, _terrain_interactions.grays)
-	var hvel = _terrain_interactions.get_hvel_relative_to_surface(character, _terrain_interactions.grays) 
+	var forward_direction = ti.get_forward_direction_relative_to_surface(character, ti.grays)
+	var hvel = ti.get_hvel_relative_to_surface(character, ti.grays) 
 	var curr_spd = hvel.length()
 	var signed_spd = hvel.dot(forward_direction)  # +ve → forward, -ve → backward
 
@@ -96,8 +95,8 @@ func decelerate(character: Character, delta: float) -> void:
 			character.velocity += forward_direction * -add
 		
 func tend_speed_to_zero(character: Character, delta: float) -> void:
-	var forward_direction = _terrain_interactions.get_forward_direction_relative_to_surface(character, _terrain_interactions.grays)
-	var horizontal_velocity = _terrain_interactions.get_hvel_relative_to_surface(character, _terrain_interactions.grays)
+	var forward_direction = ti.get_forward_direction_relative_to_surface(character, ti.grays)
+	var horizontal_velocity = ti.get_hvel_relative_to_surface(character, ti.grays)
 	var curr_spd = horizontal_velocity.length()
 	var signed_spd = horizontal_velocity.dot(forward_direction)
 	
@@ -124,7 +123,7 @@ var _turn_velocity := 0.0
 
 func steering(character: Character, delta: float) -> void:
 	# base fractions
-	var hspeed = _terrain_interactions.get_hvel_relative_to_surface(character, _terrain_interactions.grays).length()
+	var hspeed = ti.get_hvel_relative_to_surface(character, ti.grays).length()
 	var speed_frac= clamp(hspeed / character.top_speed, 0.0, 1.0)
 
 	# min‐floor + sqrt ramp over first 40%
@@ -159,7 +158,7 @@ func steering(character: Character, delta: float) -> void:
 	var actual_turn = _turn_velocity * turn_scale * delta
 
 	# orient the surface normal upwards
-	var n = _terrain_interactions.get_ground_normal( _terrain_interactions.grays)
+	var n = ti.get_ground_normal( ti.grays)
 
 	character.rotate_object_local(n, actual_turn)
 	character.velocity = character.velocity.rotated(n, actual_turn)

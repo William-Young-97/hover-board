@@ -2,9 +2,10 @@ extends Node
 
 class_name State
 
-var _terrain_interactions: TerrainInteractions
-var _visual_roll_controller: VisualRollController
-var _airborne_helper: AirborneHelper
+var ti: TerrainInteractions
+var vrc: VisualRollController
+var dh: DriftHelper
+var ah: AirborneHelper
 
 
 func enter(character: Character, delta: float):

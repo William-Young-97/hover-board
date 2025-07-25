@@ -3,6 +3,8 @@ class_name AirborneState
 
 var state_name = "airborne"
 
+var hf: HelperFunctions
+
 var eligible_to_drift = false
 
 var _input_turn := 0.0
@@ -12,18 +14,19 @@ var bank_target_yaw := 0.0
 var bank_speed := 4.0 # radians/sec
 const default_drift_angle := deg_to_rad(20)
 
-var hf = HelperFunctions
 
 func enter(character: Character, delta):
+	hf = HelperFunctions.new()
 	character.air_base_entry_yaw = character.rotation.y
 	print("Entering Airborne")
+	
 func update(character: Character, delta):
-	_terrain_interactions.apply_leveling_slerp(character, _terrain_interactions.arays, delta)
+	ti.apply_leveling_slerp(character, ti.arays, delta)
 	character.move_and_slide()
 	if self.eligible_to_drift == true:
 		self.pre_drift_air_bank(character, delta)
 		# gravity
-	_terrain_interactions.apply_gravity(delta)
+	ti.apply_gravity(delta)
 	
 func on_trigger(character: Character, trigger: int, delta) -> State:
 	match trigger:	
