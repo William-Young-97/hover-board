@@ -6,6 +6,7 @@
 script = ExtResource("1_fyqef")
 
 [node name="SpeedLabel" type="RichTextLabel" parent="."]
+modulate = Color(1, 0, 0, 1)
 offset_left = 10.0
 offset_top = 10.0
 offset_right = 110.0

@@ -7,9 +7,6 @@ class_name Character
 @onready var _ti: TerrainInteractions = get_node(terrain_interactions_path)
 @export var visual_roll_path: NodePath
 @onready var _vrc: VisualRollController = get_node(visual_roll_path)
-#@export var drift_helper_path: NodePath
-#@onready var _dh: DriftHelper = get_node(drift_helper_path)
-
 
 # state and inputs exposed
 var current_state : State = null

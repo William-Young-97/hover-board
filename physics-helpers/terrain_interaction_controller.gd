@@ -37,7 +37,7 @@ var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 @onready var arays = [afl, afr, abl, abr] as Array[RayCast3D]
 
 const HOVER_LOWER_BAND  = 0.25
-const HOVER_UPPER_BAND    = 0.3
+const HOVER_UPPER_BAND    = 0.35
 const MAX_SLOPE_ANGLE = 50
 const COS_MAX_SLOPE  = cos(deg_to_rad(MAX_SLOPE_ANGLE))
 

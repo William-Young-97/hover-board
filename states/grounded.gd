@@ -4,7 +4,8 @@ class_name GroundState
 var state_name = "grounded"
 var _did_movement_input := false
 var _input_turn := 0.0
-const ROLL_SPEED := deg_to_rad(45)
+#const ROLL_SPEED := deg_to_rad(45)
+
 func enter(character: Character, delta:):
 	print("Entering Grounded")
 	vrc.board_roll_amount = 0.3

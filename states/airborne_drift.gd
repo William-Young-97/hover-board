@@ -5,7 +5,10 @@ var state_name = "airborne_drift"
 var _inward_drift_timer = 0
 
 var _dh: DriftHelper
-	
+
+# I'm pretty sure the gravity is being converted into outward and passive drift
+# Will need to cirumvent this
+
 func enter(character: Character, delta) -> void:
 	_dh = DriftHelper.new(ti, vrc)
 	vrc.board_roll_amount = 0.8

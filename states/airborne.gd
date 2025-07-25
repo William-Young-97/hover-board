@@ -12,7 +12,7 @@ const MIN_DRIFT_ENTRY_SPEED := 20
 
 var bank_target_yaw := 0.0
 var bank_speed := 4.0 # radians/sec
-const default_drift_angle := deg_to_rad(20)
+const default_drift_angle := deg_to_rad(30)
 
 
 func enter(character: Character, delta):
@@ -30,21 +30,20 @@ func update(character: Character, delta):
 	
 func on_trigger(character: Character, trigger: int, delta) -> State:
 	match trigger:	
-		Events.Trigger.JUMP_HELD:			
+		Events.Trigger.JUMP_HELD:
 			if character.jumped and character.input_left \
 			and hf.get_mph(character) > MIN_DRIFT_ENTRY_SPEED:
 				character.drift_dir = +1
 				bank_target_yaw = character.air_base_entry_yaw \
 				 + default_drift_angle * character.drift_dir
-				
 				character.jumped = false
 				self.eligible_to_drift = true
+				print("character left drift: ", character.left_drift)
 			elif character.jumped and character.input_right \
 			and hf.get_mph(character) > MIN_DRIFT_ENTRY_SPEED:
 				character.drift_dir = -1
 				bank_target_yaw = character.air_base_entry_yaw \
 				 + default_drift_angle * character.drift_dir
-				
 				character.jumped = false
 				self.eligible_to_drift = true
 		
@@ -64,6 +63,10 @@ func on_trigger(character: Character, trigger: int, delta) -> State:
 	return null
 
 func pre_drift_air_bank(character: Character, delta: float):
+	var n = ti.get_ground_normal(ti.arays)
+	if n.dot(Vector3.UP) < 0:
+		n = -n
+
 	var old_yaw = character.rotation.y
 	# move_toward prevents overshoot
 	var new_yaw = hf.step_angle( old_yaw,
