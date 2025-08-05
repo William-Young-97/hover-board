@@ -7,6 +7,9 @@ var vrc: VisualRollController
 var dh: DriftHelper
 var ah: AirborneHelper
 
+var lm: Node3D
+var rm: Node3D
+
 
 func enter(character: Character, delta: float):
 	pass

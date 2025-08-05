@@ -8,6 +8,16 @@ class_name Character
 @export var visual_roll_path: NodePath
 @onready var _vrc: VisualRollController = get_node(visual_roll_path)
 
+# get lookahead targets to inject for drift helper
+@export var left_marker_cam_path: NodePath
+@onready var _lm: Node3D = get_node(left_marker_cam_path)
+@export var right_marker_cam_path: NodePath
+@onready var _rm: Node3D = get_node(right_marker_cam_path)
+
+
+
+
+
 # state and inputs exposed
 var current_state : State = null
 var input_forward := false
@@ -21,9 +31,12 @@ var input_jump_released := false
 
 # used across some states. I could inject them but this is easier for now
 var jumped = false
+var target_jump_height = 0.0
 var air_base_entry_yaw = 0.0
-var top_speed := 50.0  # used in acceleration; steering; hclamp; tend to zero
+var top_speed := 100.0  # used in acceleration; steering; hclamp; tend to zero
 
+var drift_base_dir := Vector3.ZERO
+var drift_base_speed: float
 var drift_dir = 0
 var left_drift = false
 var right_drift = false
@@ -35,7 +48,6 @@ func _ready():
 	current_state = GroundState.new()
 	current_state.ti = _ti
 	current_state.vrc = _vrc
-	#current_state.dh = _dh
 	
 func _physics_process(delta: float) -> void:
 	_handle_inputs()
@@ -53,9 +65,10 @@ func load_and_configure_next_state(next_state: State, delta: float):
 		current_state.exit(self, delta)
 		current_state = next_state
 		# inject every state
-		current_state.ti = _ti
-		current_state.vrc = _vrc
-		#DDDcurrent_state.dh = _dh
+		current_state.ti = self._ti
+		current_state.vrc = self._vrc
+		current_state.lm = self._lm
+		current_state.rm = self._rm
 		current_state.enter(self, delta)
 
 func _handle_inputs():

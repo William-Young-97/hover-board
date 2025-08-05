@@ -6,11 +6,12 @@ var _inward_drift_timer = 0
 
 var _dh: DriftHelper
 
+
 # I'm pretty sure the gravity is being converted into outward and passive drift
 # Will need to cirumvent this
 
 func enter(character: Character, delta) -> void:
-	_dh = DriftHelper.new(ti, vrc)
+	_dh = DriftHelper.new(ti, vrc, lm, rm)
 	vrc.board_roll_amount = 0.8
 	print("Entering Airborne Drift")
 	
@@ -18,11 +19,9 @@ func exit(character: Character, delta: float) -> void:
 	pass
 
 func update(character: Character, delta: float) -> void:
-	ti.enforce_hover_floor(character, ti.grays)
-	ti.apply_leveling_slerp(character, ti.arays, delta)
-	ti.slide_on_slopes(character,ti.arays)
 	character.move_and_slide()
-	ti.apply_gravity(delta)
+	ti.apply_leveling_slerp(character, ti.grays, delta)
+	ti.apply_gravity(delta, 3)
 	#_exit_at_20_mph(character)
 	_dh._apply_drift(character, delta)
 	
@@ -33,12 +32,10 @@ func on_trigger(character: Character, trigger: int, delta: float) -> State:
 		Events.Trigger.BACKWARD:
 			_dh._decelerate_drift(character, delta)
 		Events.Trigger.JUMP_RELEASE:
-			character.left_drift = false
-			character.right_drift = false
+			#character.left_drift = false
+			#character.right_drift = false
 			if ti.should_land(ti.grays) == false:
 				return AirborneState.new()
-			else:
-				return GroundState.new()		
 			return GroundState.new()
 		Events.Trigger.LANDED:
 			return DriftState.new()

@@ -36,10 +36,17 @@ var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 
 @onready var arays = [afl, afr, abl, abr] as Array[RayCast3D]
 
-const HOVER_LOWER_BAND  = 0.25
-const HOVER_UPPER_BAND    = 0.35
-const MAX_SLOPE_ANGLE = 50
-const COS_MAX_SLOPE  = cos(deg_to_rad(MAX_SLOPE_ANGLE))
+const HOVER_LOWER_BAND  = 0.5
+const HOVER_UPPER_BAND    = 0.8
+#const MAX_SLOPE_ANGLE = 50
+#const COS_MAX_SLOPE  = cos(deg_to_rad(MAX_SLOPE_ANGLE))
+
+func enforce_max_speed(character: Character) -> void:
+	var v = character.velocity
+	var mag = v.length()
+	if mag > character.top_speed:
+		character.velocity = v.normalized() * character.top_speed
+		
 
 func apply_gravity(delta: float, modifier := 1.0):
 	_character.velocity.y -= self.gravity * delta * modifier
@@ -51,7 +58,7 @@ func should_land(rays: Array[RayCast3D]) -> bool:
 			continue
 		var gap = ray.global_transform.origin.y - ray.get_collision_point().y
 		var n   = ray.get_collision_normal()
-		if gap <= HOVER_LOWER_BAND and n.dot(Vector3.UP) >= COS_MAX_SLOPE:
+		if gap <= HOVER_LOWER_BAND: #and n.dot(Vector3.UP) >= COS_MAX_SLOPE:
 			return true
 	return false
 
@@ -65,38 +72,46 @@ func should_leave_ground(rays: Array[RayCast3D]) -> bool:
 			return true
 	return false
 
-# need this accurate to make sure we can keep up with slerp
-func enforce_hover_floor(character: Character, rays: Array[RayCast3D]) -> void:
-	var total_error := 0.0
-	var count := 0
+func enforce_hover_floor(character: Character, rays: Array[RayCast3D], delta: float) -> void:
+	# 1) compute the average slope normal once
+	var n = get_ground_normal(rays)
+	if n.dot(Vector3.UP) < 0:
+		n = -n
+	# spring stiffness (tweak between ~4–12)
+	var stiffness := 12.0
+
 	for ray in rays:
 		if not ray.is_colliding():
 			continue
 
-		var origin_y = ray.global_transform.origin.y
-		var hit_y    = ray.get_collision_point().y
-		var gap      = origin_y - hit_y
+		# 2) measure penetration distance ALONG that normal
+		var origin = ray.global_transform.origin
+		var hit    = ray.get_collision_point()
+		var gap    = (origin - hit).dot(n)
 
-		# signed error: positive if below 0.25, negative if above
-		var error = HOVER_LOWER_BAND - gap
-		total_error += error
-		count += 1
-	if count == 0:
-		return
-	# average signed error
-	var avg_error = total_error / count
-	
-	var step_time = Engine.get_physics_frames()  # 60
-	var step_time_modifer = 12
-	var adjusted_step_time = step_time/step_time_modifer
-	# catch NaN on startup
-	if adjusted_step_time == 0.0:
-		adjusted_step_time = 1.0
-	else:
-		adjusted_step_time = adjusted_step_time
-	# apply a fraction of the error each tick
-	character.translate(Vector3.UP * (avg_error / adjusted_step_time))
-				
+		# 3) if you’re below the hover‑floor, snap up & add velocity
+		if gap < HOVER_LOWER_BAND:
+			var correction = HOVER_LOWER_BAND - gap
+			# positional correction (keeps you from clipping)
+			character.translate(n * correction)
+
+			# **inject vertical speed** so you bounce back up
+			# impulse = correction * stiffness  (units: speed)
+			# you can multiply by delta if you prefer an 'acceleration' style spring
+			
+			#character.velocity += n * (correction * stiffness)
+
+			return
+		# 4) if you’re above it, pull down (same deal)
+		elif gap > HOVER_LOWER_BAND:
+			var down = gap - HOVER_LOWER_BAND
+			character.translate(-n * down)
+
+			# optional: add a small downward impulse so you settle faster
+			#character.velocity -= n * (down * stiffness * 0.5)
+
+			return
+
 func get_ground_normal(rays: Array[RayCast3D], use_hover_band := true) -> Vector3:
 	var sum = Vector3.ZERO
 	var count = 0
@@ -122,8 +137,8 @@ func get_ground_normal(rays: Array[RayCast3D], use_hover_band := true) -> Vector
 			
 		var n = ray.get_collision_normal()
 		# skip walls
-		if n.dot(Vector3.UP) < COS_MAX_SLOPE:
-			continue
+		#if n.dot(Vector3.UP) < COS_MAX_SLOPE:
+			#continue
 
 		sum += n
 		count += 1
@@ -132,7 +147,7 @@ func get_ground_normal(rays: Array[RayCast3D], use_hover_band := true) -> Vector
 	return (sum / count).normalized()
 
 # lower for smoother slerp
-const ALIGN_SPEED_GROUND = 8.0
+const ALIGN_SPEED_GROUND = 6.0
 
 func check_air_or_ground_ray(rays: Array[RayCast3D]) -> bool:
 	var use_hover_band = true
@@ -161,7 +176,6 @@ func apply_leveling_slerp(character: Character, rays: Array[RayCast3D], delta: f
 
 func slide_on_slopes(character: Character, raycast_type: Array[RayCast3D]):
 	var normal = get_ground_normal(raycast_type)
-	# strip out all motion along the normal—both up and down
 	character.velocity = character.velocity.slide(normal)
 
 func get_forward_direction_relative_to_surface(character: Character, raycast_type: Array[RayCast3D]) -> Vector3:
@@ -182,18 +196,37 @@ func get_hvel_relative_to_surface(character: Character, raycast_type: Array[RayC
 	# project v onto the slope plane
 	return (v - n * v.dot(n))
 
-func clear_lateral_velocity(character: Character) -> void:
-	var side = HelperFunctions.get_side_axis(character)
-	var lat = character.velocity.dot(side)
-	var return_speed_factor = 1.2
-	character.velocity -= side * lat * return_speed_factor
+func kill_lateral_velocity(character: Character, delta: float, bleed_time = 0.0, ):
+	# 1) Get slope normal (always pointing up)
+	var n = self.get_ground_normal(grays)
+	if n.dot(Vector3.UP) < 0:
+		n = -n
 
-# really need to adjust this to the air cand and ground
-func get_corner_distances(rays: Array[RayCast3D]) -> Array:
-	var dists := []
-	for r in rays:
-		if not r.is_colliding(): continue
-		var n = r.get_collision_normal()
-		var offset = r.global_transform.origin - r.get_collision_point()
-		dists.append(offset.dot(n))
-	return dists
+	# 2) Split your 3D velocity into planar + normal parts
+	var old_v       = character.velocity
+	var normal_spd  = old_v.dot(n)
+	var planar_v    = old_v - n * normal_spd
+	var planar_spd  = planar_v.length()
+	if planar_spd < 0.01:
+		return
+
+	# 3) Build your true planar axes:
+	#    side_axis_plane = board's local X, re‑projected into the slope plane
+	var raw_side     = HelperFunctions.get_side_axis(character)
+	var side_axis_plane = (raw_side - n * raw_side.dot(n)).normalized()
+
+	# 4) Current travel‐direction
+	var planar_dir   = planar_v / planar_spd
+
+	# 5) Target direction = remove *all* side component from planar_dir
+	#    by projecting planar_dir onto the plane orthogonal to side_axis_plane
+	#    i.e. slide out the side_axis_plane component, then normalize.
+	var tgt_dir = (planar_dir - side_axis_plane * planar_dir.dot(side_axis_plane)).normalized()
+
+	# 6) Blend a little toward that side‑free target
+	#    bleed_time = seconds to *fully* lose your side‑speed
+	var t = clamp(delta / bleed_time, 0.0, 1.0)
+	var new_dir = planar_dir.lerp(tgt_dir, t).normalized()
+
+	# 7) Reassemble *exactly* the same planar speed + original normal speed
+	character.velocity = new_dir * planar_spd + n * normal_spd

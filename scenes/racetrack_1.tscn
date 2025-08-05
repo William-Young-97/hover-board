@@ -1,0 +1,25 @@
+[gd_scene load_steps=7 format=3 uid="uid://b7r405x7vch6e"]
+
+[ext_resource type="Texture2D" uid="uid://c2ac46bpv775u" path="res://game-models/map/panorama_image.png" id="1_yq0gg"]
+[ext_resource type="PackedScene" uid="uid://cknpa41edgqna" path="res://game-models/map/Racetrack1.glb" id="2_rpq1j"]
+[ext_resource type="PackedScene" uid="uid://ddd6dpxasgawl" path="res://scenes/player.tscn" id="3_rpq1j"]
+
+[sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_7lcsg"]
+panorama = ExtResource("1_yq0gg")
+
+[sub_resource type="Sky" id="Sky_g14j6"]
+sky_material = SubResource("PanoramaSkyMaterial_7lcsg")
+
+[sub_resource type="Environment" id="Environment_0lae5"]
+background_mode = 2
+sky = SubResource("Sky_g14j6")
+
+[node name="racetrack1" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_0lae5")
+
+[node name="Racetrack1" parent="." instance=ExtResource("2_rpq1j")]
+
+[node name="Player" parent="." instance=ExtResource("3_rpq1j")]
+transform = Transform3D(-0.0472983, 0, 0.998881, 0, 1, 0, -0.998881, 0, -0.0472983, -0.055, 0.314663, -0.875399)

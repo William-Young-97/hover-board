@@ -6,19 +6,25 @@ class_name DriftHelper
 
 var ti: TerrainInteractions
 var vrc: VisualRollController
+var lm: Node3D
+var rm: Node3D
+
 var outward_carve = false
 var inward_carve = false
 
-func _init(_terrain_interactions: TerrainInteractions, _visual_roll_controller: VisualRollController) -> void:
-	ti = _terrain_interactions
-	vrc = _visual_roll_controller
+func _init(_ti: TerrainInteractions, _vrc: VisualRollController, _lm: Node3D, _rm: Node3D) -> void:
+	ti = _ti
+	vrc = _vrc
+	lm = _lm
+	rm = _rm
 
 var _inward_drift_timer = 0
 var hf = HelperFunctions.new()
 
 func enter(character: Character, delta) -> void:
-	vrc .board_roll_amount = 0.8
-
+	vrc.board_roll_amount = 0.8
+	
+	
 # this method will switch to handle left vs right drift
 func _apply_drift(character: Character, delta):
 	# extra guard against drift not releasing
@@ -73,111 +79,86 @@ func _apply_drift(character: Character, delta):
 			
 func _apply_drift_side_pull(character: Character, drift_dir: int, delta: float) -> void:
 	var pull_and_yaw := 0.5
-	# 1) slope normal
+
 	var n = ti.get_ground_normal(ti.grays)
 	if n.dot(Vector3.UP) < 0:
 		n = -n
 
-	# 2) planar basis axes
-	var raw_fwd = -character.global_transform.basis.z.normalized()
+	var raw_fwd          = -character.global_transform.basis.z.normalized()
 	var forward_on_plane = (raw_fwd - n * raw_fwd.dot(n)).normalized()
 	var side_on_plane    = n.cross(forward_on_plane).normalized()
 
-	# 3) decompose velocity
-	var old_v       = character.velocity
-	var normal_spd  = old_v.dot(n)
-	var planar_v    = old_v - n * normal_spd
-	var planar_spd  = planar_v.length()
+	var old_v      = character.velocity
+	var normal_spd = old_v.dot(n)
+	var planar_v   = old_v - n * normal_spd
+	var planar_spd = planar_v.length()
 	if planar_spd < 0.001:
-		return  # nothing to pull
+		return
 
-	# 4) find inward‑side unit axis
-	#    drift_dir = +1 for left‑drift, -1 for right‑drift,
-	#    side_on_plane points “outside” if we keep the reference convention,
-	#    so invert it to get the *inside* direction:
 	var inward_side = -drift_dir * side_on_plane
 
-	# 5) blend current heading toward inward_side
-	#    choose a small blend rate so it smoothly pulls in over time:
-	var pull_strength = pull_and_yaw # tune this (0=no pull, 1=immediate lock)
-	var blend = clamp(pull_strength * delta, 0.0, 1.0)
-
-	# current planar heading:
+	var blend = clamp(pull_and_yaw * delta, 0.0, 1.0)
 	var planar_dir = planar_v / planar_spd
-	# new heading is a lerp between where you are and the inside side:
-	var new_dir = planar_dir.lerp(inward_side, blend).normalized()
+	var new_dir    = planar_dir.lerp(inward_side, blend).normalized()
 
-	# 6) rebuild planar velocity at the same total speed
+	var new_planar_v = new_dir * planar_spd
+	character.velocity = new_planar_v + n * normal_spd
+
+	var cosθ = clamp(planar_dir.dot(new_dir), -1.0, 1.0)
+	var sinθ = n.dot(planar_dir.cross(new_dir))
+	var delta_angle = atan2(sinθ, cosθ)
+
+	var q = Quaternion(n, delta_angle)
+	var b = character.global_transform.basis
+	character.global_transform.basis = (Basis(q) * b)
+
+func _apply_outward_drift(character: Character, drift_dir: int, delta: float) -> void:
+	var pull_and_yaw := 0.05
+
+	var n = ti.get_ground_normal(ti.grays)
+	if n.dot(Vector3.UP) < 0:
+		n = -n
+
+	var raw_fwd          = -character.global_transform.basis.z.normalized()
+	var forward_on_plane = (raw_fwd - n * raw_fwd.dot(n)).normalized()
+	var side_on_plane    = n.cross(forward_on_plane).normalized()
+
+
+	var old_v      = character.velocity
+	var normal_spd = old_v.dot(n)
+	var planar_v   = old_v - n * normal_spd
+	var planar_spd = planar_v.length()
+	if planar_spd < 0.001:
+		return
+
+	var inward_side = drift_dir * side_on_plane 
+
+	var blend = clamp(pull_and_yaw * delta, 0.0, 1.0)
+	var planar_dir = planar_v / planar_spd
+	var new_dir    = planar_dir.lerp(inward_side, blend).normalized()
+	
+	var side_force_strength := 5.0
+	var lateral_force_vec = side_on_plane * side_force_strength * -drift_dir
+	
 	var new_planar_v = new_dir * planar_spd
 
-	# 7) reassemble full velocity (plane + normal)
-	character.velocity = new_planar_v + n * normal_spd
+	character.velocity = new_planar_v + n * normal_spd + (lateral_force_vec * delta)
 	
-		# 8) now align the board’s yaw to the new planar velocity
-	#    a) get the same planar forward axis
-	raw_fwd = -character.global_transform.basis.z.normalized()
-	forward_on_plane = (raw_fwd - n * raw_fwd.dot(n)).normalized()
+	var cosθ = clamp(planar_dir.dot(new_dir), -1.0, 1.0)
+	var sinθ = n.dot(planar_dir.cross(new_dir))
+	var delta_angle = atan2(sinθ, cosθ)
 
-	#    b) compute the signed angle between it and new_dir
-	var dot = clamp(forward_on_plane.dot(new_dir), -1.0, 1.0)
-	var angle = acos(dot)
-	#    c) determine sign via cross·normal
-	var sign = 0
-	if forward_on_plane.cross(new_dir).dot(n) < 0 :
-		sign = 1
-	else:
-		sign = -1
-
-	#    d) step just partway each frame for smoothness
-	var yaw_speed = pull_and_yaw # radians/sec max turn rate
-	var step = min(angle, yaw_speed * delta)
-
-	#    e) apply the rotation around the slope normal
-	character.rotate_object_local(n, step * sign)
+	var q = Quaternion(n, delta_angle)
+	var b = character.global_transform.basis
+	character.global_transform.basis = (Basis(q) * b)
 	
-func _apply_outward_drift(character: Character, drift_dir: int, delta: float) -> void:
-	# 1) get the up‐vector of the slope
-	var n = ti.get_ground_normal(ti.grays)
-	# ensure it points up
-	if n.dot(Vector3.UP) < 0: n = -n
-
-	# 2) build your planar axes:
-	#    forward_on_plane: board nose projected onto plane
-	var raw_forward = -character.global_transform.basis.z.normalized()
-	var forward_on_plane = (raw_forward - n * raw_forward.dot(n)).normalized()
-	#    side_on_plane: perpendicular in that plane
-	var side_on_plane = n.cross(forward_on_plane).normalized()
-
-	# 3) decompose your *current* velocity into planar and normal parts
-	var old_v     = character.velocity
-	var vertical_spd = old_v.dot(n)
-	var planar_v  = old_v - n * vertical_spd
-
-	# 4) split planar into forward & side scalars
-	var fwd_spd = forward_on_plane.dot(planar_v)
-	var lat_spd = side_on_plane.dot(planar_v)
-
-	# 5) compute shift
-	var shift_rate = 0.5
-	var shift      = min(fwd_spd, fwd_spd * shift_rate * delta)
-	var outward_dir = -drift_dir
-	# 6) reassign
-	fwd_spd -= shift
-	lat_spd += outward_dir * shift
-
-	# 7) rebuild planar velocity
-	var new_planar_v = forward_on_plane * fwd_spd + side_on_plane * lat_spd
-	# 8) stitch back vertical
-	character.velocity = new_planar_v + n * vertical_spd
-
 # drifting becomes more effective at higher speeds
 func _scale_drift_yaw_to_speed(character: Character, delta) -> float:
-	var starting_yaw_rate := 1.0 
-	var max_yaw_rate      := 1.9 
-	var min_carve_frac    := 0.2 
+	var starting_yaw_rate := 1.3
+	var max_yaw_rate      := 2.2
+	var min_carve_frac    := 0.2
 	var hvel = ti.get_hvel_relative_to_surface(character, ti.grays)
-	# kind of doubling up the above func but trying to ensure speed_frac
-	# only works with "forward" velocity
+
 	var n = ti.get_ground_normal(ti.grays)
 	var raw_fwd           = -character.global_transform.basis.z.normalized()
 	var forward_on_plane = (raw_fwd - n * raw_fwd.dot(n)).normalized()
@@ -191,7 +172,7 @@ func _scale_drift_yaw_to_speed(character: Character, delta) -> float:
 	
 # build yaw based on time input held
 func _scale_yaw_to_input(character: Character, delta, max_yaw,  drift_dir):
-	var max_hold_time = 0.5
+	var max_hold_time = 0.4
 	var starting_yaw_rate := 1.3
 	var inward_held := false
 	
@@ -205,9 +186,9 @@ func _scale_yaw_to_input(character: Character, delta, max_yaw,  drift_dir):
 	else:
 		_inward_drift_timer = 0
 	
-	var t = _inward_drift_timer / max_hold_time # 0→1 over that second
+	var t = _inward_drift_timer / max_hold_time
 	var applied_yaw = lerp(starting_yaw_rate, max_yaw, t)
-	
+
 	var n = ti.get_ground_normal(ti.grays)
 	if n.dot(Vector3.UP) < 0:
 		n = -n
@@ -218,10 +199,10 @@ func _scale_yaw_to_input(character: Character, delta, max_yaw,  drift_dir):
 	character.global_transform.basis = (Basis(q) * b).orthonormalized()
 	
 
-var drift_vel_blend := 5
+var drift_vel_blend := 3.0
 func _apply_inward_drift_velocity_blend(character: Character, delta: float) -> void:
 	# slope normal
-	var n = ti.get_ground_normal( ti.arays)
+	var n = ti.get_ground_normal( ti.grays)
 
 	# old full velocity and its normal component
 	var old_v    = character.velocity
@@ -240,17 +221,15 @@ func _apply_inward_drift_velocity_blend(character: Character, delta: float) -> v
 	# blend current hvel‑dir toward nose_plane
 	var blend = clamp(drift_vel_blend * delta, 0.0, 1.0)
 	var new_dir = hvel.normalized().lerp(nose_plane, blend).normalized()
-	
-	# rebuild planar velocity
+
 	var new_hvel = new_dir * speed
 
-	# reassemble full 3D velocity: planar + preserved normal
 	character.velocity = new_hvel + n * norm_spd
 
 
 # increase the speed of whever the current velocity is agnositic to direction
 func _accelerate_drift(character: Character, delta: float) -> void:
-	var hvel = ti.get_hvel_relative_to_surface(character,  ti.arays)
+	var hvel = ti.get_hvel_relative_to_surface(character,  ti.grays)
 	var speed = hvel.length()
 
 	var delta_speed = HelperFunctions.calc_forward_accel_delta(character, speed, delta)
@@ -262,29 +241,26 @@ func _accelerate_drift(character: Character, delta: float) -> void:
 func _decelerate_drift(character: Character, delta: float) -> void:
 	var decel_rate := 10.0
 
-	# 1) find the slope‐up normal
+
 	var n = ti.get_ground_normal(ti.grays)
 	if n.dot(Vector3.UP) < 0:
 		n = -n
 
-	# 2) split current velocity into planar + normal parts
 	var old_v       = character.velocity
-	var normal_spd  = old_v.dot(n)               # keep this intact
-	var planar_v    = old_v - n * normal_spd     # what we'll decelerate
+	var normal_spd  = old_v.dot(n)      
+	var planar_v    = old_v - n * normal_spd    
 
-	# 3) measure how fast you're moving in that planar direction
+
 	var speed       = planar_v.length()
 	if speed < 0.001:
-		return  # nothing to decelerate
+		return 
 
-	# 4) compute deceleration delta
 	var decel_amt   = min(decel_rate * delta, speed)
-
-	# 5) rebuild the new planar velocity
+	
 	var dir         = planar_v.normalized()
 	var new_planar  = dir * (speed - decel_amt)
 
-	# 6) re‑assemble full 3D velocity
+	# re‑assemble elocity
 	character.velocity = new_planar + n * normal_spd
 
 # probably a slightly unessecary guard given i dont bleed drift speed

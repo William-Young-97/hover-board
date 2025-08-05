@@ -1,0 +1,9 @@
+# BUGS
+
+# DRIFT
+
+- outward drift should not add velocity but merge from existing velocity
+
+# JUMP
+
+- Not accounting for a manual jump over a ledge. This will give the 3x gravity where it should be normal

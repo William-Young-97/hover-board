@@ -4,19 +4,59 @@ class_name GroundState
 var state_name = "grounded"
 var _did_movement_input := false
 var _input_turn := 0.0
-#const ROLL_SPEED := deg_to_rad(45)
 
-func enter(character: Character, delta:):
+const DRIFT_RETURN_ANGLE := deg_to_rad(20) 
+const YAW_DURATION := 0.1
+var _yaw_timer := 0.0
+var _exit_drift_dir = 0
+
+var exited_drift = false
+
+func enter(character: Character, delta: float):
 	print("Entering Grounded")
 	vrc.board_roll_amount = 0.3
+	character.connect("exited_drift", self._on_exited_drift)
 
-func update(character: Character, delta: float) -> State:
-	ti.enforce_hover_floor(character, ti.grays)
-	ti.apply_leveling_slerp(character, ti.grays, delta)
-	ti.slide_on_slopes(character, ti.grays)
-	character.move_and_slide()
+func exit(character: Character, delta: float):
+	character.left_drift = false
+	character.right_drift = false
+
+func _on_exited_drift():
+	exited_drift = true
+	_yaw_timer  = YAW_DURATION
 	
-	ti.clear_lateral_velocity(character)
+func update(character: Character, delta: float) -> State:
+	ti.enforce_max_speed(character)
+	character.move_and_slide()
+	ti.apply_gravity(delta, 1)
+	ti.apply_leveling_slerp(character, ti.grays, delta)
+	ti.enforce_hover_floor(character, ti.grays, delta)
+	ti.slide_on_slopes(character, ti.grays)
+	if self.exited_drift == true:
+		if character.left_drift:
+			self._exit_drift_dir = 1
+		elif character.right_drift:
+			self._exit_drift_dir = -1
+		
+		if self._yaw_timer <= 0.0:
+			self._yaw_timer == 0
+			self.exited_drift = false
+		else:
+			self._yaw_timer -= delta
+
+		var fraction = delta / YAW_DURATION
+		var target_ang = DRIFT_RETURN_ANGLE * self._exit_drift_dir
+		var step_ang   = target_ang * fraction * -1  #
+		
+		# 3) apply that yaw around the slope normal
+		var n = ti.get_ground_normal(ti.grays)
+		if n.dot(Vector3.UP) < 0: n = -n
+		var q = Quaternion(n, step_ang)
+		var b = character.global_transform.basis
+		character.global_transform.basis = (Basis(q) * b)
+		ti.kill_lateral_velocity(character, delta, 0.1)
+	else:
+		ti.kill_lateral_velocity(character, delta)
 	
 	if not _did_movement_input:
 		tend_speed_to_zero(character, delta)
@@ -34,12 +74,12 @@ func on_trigger(character: Character, trigger: int, delta) -> State:
 		Events.Trigger.LEFT:
 			self._input_turn += 1.0
 			vrc.direction += 1
-			self.steering(character, delta)
+			self.simple_steering(character, delta)
 			self._input_turn = 0.0
 		Events.Trigger.RIGHT:
 			self._input_turn -= 1.0
 			vrc.direction -= 1
-			self.steering(character, delta)
+			self.simple_steering(character, delta)
 			self._input_turn = 0.0
 		Events.Trigger.JUMP_PRESS:
 			character.jumped = true
@@ -49,7 +89,7 @@ func on_trigger(character: Character, trigger: int, delta) -> State:
 			return AirborneState.new()
 	return null
 	
-const _jump_strength := 2
+const _jump_strength := 3
 func jump(character: Character) -> void:
 	# surface normal
 	var n = ti.get_ground_normal(ti.grays)
@@ -58,8 +98,6 @@ func jump(character: Character) -> void:
 		n = -n
 	# apply  jump impulse along that normal
 	character.velocity += n * _jump_strength
-	
-
 	
 func accelerate(character: Character, delta: float) -> void:
 	var forward = ti.get_forward_direction_relative_to_surface(character, ti.grays)
@@ -70,7 +108,7 @@ func accelerate(character: Character, delta: float) -> void:
 	var delta_fwd = HelperFunctions.calc_forward_accel_delta(character, curr_fwd_spd, delta)
 
 	character.velocity += forward * delta_fwd
-
+	
 # backward acceleration
 var _deceleration_rate := 10.0
 var _top_reverse_speed := 7.5
@@ -117,49 +155,24 @@ func tend_speed_to_zero(character: Character, delta: float) -> void:
 		
 # turn settings
 var _max_turn_rate := 1.5
-var _turn_acceleration := 50.0
-var _turn_curve_exponent := 2.0
-var _turn_damping := 10.0
+var _turn_acceleration := 45.0
+var _turn_damping := sqrt(_turn_acceleration)
 var _turn_velocity := 0.0
 
-func steering(character: Character, delta: float) -> void:
-	# base fractions
-	var hspeed = ti.get_hvel_relative_to_surface(character, ti.grays).length()
-	var speed_frac= clamp(hspeed / character.top_speed, 0.0, 1.0)
-
-	# min‐floor + sqrt ramp over first 40%
-	var raw       = clamp(speed_frac / 0.8, 0.0, 1.0)
-	var min_carve = 0.2
-	var turn_scale= lerp(min_carve, 1.0, sqrt(raw)) #pow(raw, 2.0))
-
-	# carve‐acceleration logic 
+func simple_steering(character: Character, delta: float) -> void:
 	var target_rate = self._input_turn * _max_turn_rate
-
-	var turn_frac = abs(_turn_velocity) / _max_turn_rate
-	turn_frac = clamp(turn_frac, 0.0, 1.0)
-	var turn_accel_scale = 1.0 - pow(turn_frac, _turn_curve_exponent)
-
 	if self._input_turn == 0.0:
-		# bleed‐off
 		_turn_velocity = lerp(_turn_velocity, 0.0, _turn_damping * delta)
 	else:
 		var rate_diff = target_rate - _turn_velocity
-		var effective_scale = 1.0 if rate_diff * _turn_velocity < 0.0 else turn_accel_scale
-
-		# angular accel scaled by speed
-		var applied_accel = sign(rate_diff) \
-			* _turn_acceleration \
-			* effective_scale \
-			* turn_scale
-		_turn_velocity += applied_accel * delta
-
+		var accel = sign(rate_diff) * _turn_acceleration * delta
+		_turn_velocity += accel
 	_turn_velocity = clamp(_turn_velocity, -_max_turn_rate, _max_turn_rate)
-
-	# raw turn angle
-	var actual_turn = _turn_velocity * turn_scale * delta
-
-	# orient the surface normal upwards
-	var n = ti.get_ground_normal( ti.grays)
-
-	character.rotate_object_local(n, actual_turn)
-	character.velocity = character.velocity.rotated(n, actual_turn)
+	var n = ti.get_ground_normal(ti.grays)
+	if n.dot(Vector3.UP) < 0:
+		n = -n
+	var angle = _turn_velocity * delta
+	# This works better on angle because both are inherently orthonormalised
+	var q = Quaternion(n, angle)
+	var b = character.global_transform.basis
+	character.global_transform.basis = (Basis(q) * b)

@@ -12,7 +12,7 @@ static func instance() -> HelperFunctions:
 # Physics calculation helpers
 # acceleration helper func
 static func calc_forward_accel_delta(character: Character, curr_fwd_spd: float, delta: float) -> float:
-	var _max_acceleration := 8.0
+	var _max_acceleration := 12.0
 	# how far along top speed we are
 	var frac = clamp(curr_fwd_spd / character.top_speed, 0.0, 1.0)
 	# quadratic taper: big accel at low speeds, zero at top

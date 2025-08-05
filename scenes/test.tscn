@@ -8,14 +8,17 @@
 [sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_ykrsh"]
 panorama = ExtResource("3_lpvoh")
 
-[sub_resource type="Sky" id="Sky_g14j6"]
+[sub_resource type="Sky" id="Sky_74lek"]
 sky_material = SubResource("PanoramaSkyMaterial_ykrsh")
 
 [sub_resource type="Environment" id="Environment_vbegm"]
 background_mode = 2
-sky = SubResource("Sky_g14j6")
+sky = SubResource("Sky_74lek")
 
 [node name="World" type="Node3D"]
+
+[node name="Square-park10" parent="." instance=ExtResource("4_at5dv")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.471, -120.39)
 
 [node name="Square-park6" parent="." instance=ExtResource("4_at5dv")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.471015, -60.1182)
@@ -65,3 +68,18 @@ transform = Transform3D(0.965927, 0.258819, 0, -0.258819, 0.965927, 0, 0, 0, 1, 
 
 [node name="Square-park9" parent="." instance=ExtResource("4_at5dv")]
 transform = Transform3D(0.939693, -0.34202, 0, 0.34202, 0.939693, 0, 0, 0, 1, 56.954, 9.55304, -3.73057)
+
+[node name="Square-park11" parent="." instance=ExtResource("4_at5dv")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 60.3205, -0.471, -120.346)
+
+[node name="Square-park12" parent="." instance=ExtResource("4_at5dv")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -59.6236, -0.471, -120.628)
+
+[node name="Square-park13" parent="." instance=ExtResource("4_at5dv")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0589218, -0.471, -180.247)
+
+[node name="Square-park14" parent="." instance=ExtResource("4_at5dv")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 60.3794, -0.471, -180.202)
+
+[node name="Square-park15" parent="." instance=ExtResource("4_at5dv")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -59.5647, -0.471, -180.485)
