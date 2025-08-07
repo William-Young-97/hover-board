@@ -22,16 +22,17 @@ func exit(character: Character, delta: float):
 	character.right_drift = false
 
 func _on_exited_drift():
+	print("running")
 	exited_drift = true
 	_yaw_timer  = YAW_DURATION
 	
 func update(character: Character, delta: float) -> State:
 	ti.enforce_max_speed(character)
-	character.move_and_slide()
-	ti.apply_gravity(delta, 1)
 	ti.apply_leveling_slerp(character, ti.grays, delta)
 	ti.enforce_hover_floor(character, ti.grays, delta)
-	ti.slide_on_slopes(character, ti.grays)
+	ti.apply_gravity(delta)
+	character.move_and_slide()
+	# help align after exiting drift
 	if self.exited_drift == true:
 		if character.left_drift:
 			self._exit_drift_dir = 1
@@ -48,12 +49,12 @@ func update(character: Character, delta: float) -> State:
 		var target_ang = DRIFT_RETURN_ANGLE * self._exit_drift_dir
 		var step_ang   = target_ang * fraction * -1  #
 		
-		# 3) apply that yaw around the slope normal
 		var n = ti.get_ground_normal(ti.grays)
 		if n.dot(Vector3.UP) < 0: n = -n
 		var q = Quaternion(n, step_ang)
 		var b = character.global_transform.basis
 		character.global_transform.basis = (Basis(q) * b)
+		
 		ti.kill_lateral_velocity(character, delta, 0.1)
 	else:
 		ti.kill_lateral_velocity(character, delta)

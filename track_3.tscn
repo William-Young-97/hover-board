@@ -1,0 +1,35 @@
+[gd_scene load_steps=8 format=3 uid="uid://dxmd5qk4orswn"]
+
+[ext_resource type="Texture2D" uid="uid://c2ac46bpv775u" path="res://game-models/map/panorama_image.png" id="1_i2j0o"]
+[ext_resource type="PackedScene" uid="uid://ddd6dpxasgawl" path="res://scenes/player.tscn" id="2_g86pc"]
+[ext_resource type="PackedScene" uid="uid://d4elnm5ktpi2n" path="res://scenes/ui.tscn" id="3_6d1d2"]
+[ext_resource type="PackedScene" uid="uid://bpsglabr5r5ni" path="res://game-models/map/SmallerTrack.glb" id="4_5d4uf"]
+
+[sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_2p5kl"]
+panorama = ExtResource("1_i2j0o")
+
+[sub_resource type="Sky" id="Sky_74lek"]
+sky_material = SubResource("PanoramaSkyMaterial_2p5kl")
+
+[sub_resource type="Environment" id="Environment_ut2nc"]
+background_mode = 2
+sky = SubResource("Sky_74lek")
+
+[node name="Track3" type="Node3D"]
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(-0.866024, -0.433016, 0.250001, 0, 0.499998, 0.866026, -0.500003, 0.749999, -0.43301, 0, 3.5986, 0)
+light_color = Color(1, 0.942976, 0.941426, 1)
+light_energy = 3.0
+shadow_enabled = true
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_ut2nc")
+
+[node name="UI" parent="." instance=ExtResource("3_6d1d2")]
+player_path = NodePath("../Player")
+
+[node name="SmallerTrack" parent="." instance=ExtResource("4_5d4uf")]
+
+[node name="Player" parent="." instance=ExtResource("2_g86pc")]
+transform = Transform3D(-0.015812, 0, -0.999875, 0, 1, 0, 0.999875, 0, -0.015812, 4.24989, -0.00312424, -0.56305)

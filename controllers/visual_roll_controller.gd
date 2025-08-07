@@ -1,11 +1,6 @@
 extends Node
 class_name VisualRollController
 
-# TODO
-# When travelling bacckwards the tilt needs to flipped to make sense
-# implement roll for terrain orientation that runs spereately
-# switch my collider to a flat capsual to lower ambiguity between model aand view states
-
 @export var board_model_path: NodePath
 @onready var _board_model: Node3D =  get_node(board_model_path)
 
@@ -25,7 +20,7 @@ func _ready():
 		
 func _physics_process(delta: float) -> void:
 	visual_roll(delta)
-	#print(self.direction)
+
 	self.direction = 0.0
 
 func visual_roll(delta: float) -> void:

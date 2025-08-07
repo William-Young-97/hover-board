@@ -15,7 +15,7 @@ class_name Character
 @onready var _rm: Node3D = get_node(right_marker_cam_path)
 
 
-
+signal exited_drift(character: Character)
 
 
 # state and inputs exposed
@@ -48,6 +48,7 @@ func _ready():
 	current_state = GroundState.new()
 	current_state.ti = _ti
 	current_state.vrc = _vrc
+
 	
 func _physics_process(delta: float) -> void:
 	_handle_inputs()
@@ -102,7 +103,8 @@ func _handle_events() -> Array:
 		_events.append(Events.Trigger.JUMP_RELEASE)
 
 	# environment‑based transitions
-	if _ti.should_land(_ti.grays):
+	if _ti.should_land(_ti.grays) and current_state.state_name != "grounded":
+		_ti._apply_landing_damper(self)
 		_events.append(Events.Trigger.LANDED)
 	
 	if _ti.should_leave_ground(_ti.grays):

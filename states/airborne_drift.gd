@@ -6,7 +6,6 @@ var _inward_drift_timer = 0
 
 var _dh: DriftHelper
 
-
 # I'm pretty sure the gravity is being converted into outward and passive drift
 # Will need to cirumvent this
 

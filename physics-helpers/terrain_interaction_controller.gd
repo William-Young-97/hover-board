@@ -36,10 +36,10 @@ var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 
 @onready var arays = [afl, afr, abl, abr] as Array[RayCast3D]
 
-const HOVER_LOWER_BAND  = 0.5
-const HOVER_UPPER_BAND    = 0.8
-#const MAX_SLOPE_ANGLE = 50
-#const COS_MAX_SLOPE  = cos(deg_to_rad(MAX_SLOPE_ANGLE))
+const HOVER_LOWER_BAND = 0.5
+const HOVER_UPPER_BAND = 1.5
+const HOVER_HEIGHT = HOVER_LOWER_BAND + 0.3
+
 
 func enforce_max_speed(character: Character) -> void:
 	var v = character.velocity
@@ -62,6 +62,22 @@ func should_land(rays: Array[RayCast3D]) -> bool:
 			return true
 	return false
 
+func _apply_landing_damper(character: Character) -> void:
+	const LANDING_NORMAL_DAMP := 0.05
+
+	var n = get_ground_normal(grays)
+	if n.dot(Vector3.UP) < 0:
+		n = -n
+	n = n.normalized()
+
+	var v = character.velocity
+	var normal_spd = v.dot(n)
+	var planar_v = v - n * normal_spd   
+
+	normal_spd *= LANDING_NORMAL_DAMP
+
+	character.velocity = planar_v + n * normal_spd
+
 # used by Grounded → Airborne
 func should_leave_ground(rays: Array[RayCast3D]) -> bool:
 	for ray in rays:
@@ -71,46 +87,56 @@ func should_leave_ground(rays: Array[RayCast3D]) -> bool:
 		if gap > HOVER_UPPER_BAND :
 			return true
 	return false
+	
+const DEAD := 0.2
+const MAX_LIFT := 2.0
 
-func enforce_hover_floor(character: Character, rays: Array[RayCast3D], delta: float) -> void:
-	# 1) compute the average slope normal once
-	var n = get_ground_normal(rays)
-	if n.dot(Vector3.UP) < 0:
-		n = -n
-	# spring stiffness (tweak between ~4–12)
-	var stiffness := 12.0
+const MAX_PULL = 8.0
 
+
+func enforce_hover_floor(character: CharacterBody3D, rays: Array[RayCast3D], delta: float) -> void:
+
+	var total_gap = 0.0
+	var total_n   = Vector3.ZERO
+	var count     = 0
 	for ray in rays:
-		if not ray.is_colliding():
-			continue
+		if not ray.is_colliding(): continue
+		var this_n = get_ground_normal(rays)
+		if this_n.dot(Vector3.UP) < 0:
+			this_n = -this_n
+		total_n   += this_n
+		total_gap += (ray.global_transform.origin - ray.get_collision_point()).dot(this_n)
+		count += 1
+	if count == 0: return
+	var n     = (total_n / count).normalized()
+	var gap   = total_gap / count
+	var error = gap - HOVER_HEIGHT
 
-		# 2) measure penetration distance ALONG that normal
-		var origin = ray.global_transform.origin
-		var hit    = ray.get_collision_point()
-		var gap    = (origin - hit).dot(n)
+	var old_v      = character.velocity
+	var normal_spd = old_v.dot(n)
+	var planar_v   = old_v - n * normal_spd
+	var planar_spd = planar_v.length()
+	if planar_spd < 0.001:
+		planar_v = (Vector3.DOWN - n * Vector3.DOWN.dot(n)).normalized()
+		planar_spd = 0.0
 
-		# 3) if you’re below the hover‑floor, snap up & add velocity
-		if gap < HOVER_LOWER_BAND:
-			var correction = HOVER_LOWER_BAND - gap
-			# positional correction (keeps you from clipping)
-			character.translate(n * correction)
+	if abs(error) < DEAD:
+		if normal_spd < 0:
+			normal_spd = 0
+		character.velocity = planar_v.normalized() * planar_spd + n * normal_spd
+		return
 
-			# **inject vertical speed** so you bounce back up
-			# impulse = correction * stiffness  (units: speed)
-			# you can multiply by delta if you prefer an 'acceleration' style spring
-			
-			#character.velocity += n * (correction * stiffness)
+	if error < 0:
 
-			return
-		# 4) if you’re above it, pull down (same deal)
-		elif gap > HOVER_LOWER_BAND:
-			var down = gap - HOVER_LOWER_BAND
-			character.translate(-n * down)
+		var needed_v = error / delta 
+		needed_v = clamp(needed_v, -MAX_LIFT, 0.0)
+		normal_spd -= needed_v
+	elif error > 0:
+		var needed_v = error / delta
+		needed_v = clamp(needed_v, 0.0, (MAX_PULL))
+		normal_spd -= needed_v
 
-			# optional: add a small downward impulse so you settle faster
-			#character.velocity -= n * (down * stiffness * 0.5)
-
-			return
+	character.velocity = planar_v.normalized() * planar_spd + n * normal_spd
 
 func get_ground_normal(rays: Array[RayCast3D], use_hover_band := true) -> Vector3:
 	var sum = Vector3.ZERO
@@ -136,24 +162,20 @@ func get_ground_normal(rays: Array[RayCast3D], use_hover_band := true) -> Vector
 			ray.force_raycast_update()
 			
 		var n = ray.get_collision_normal()
-		# skip walls
-		#if n.dot(Vector3.UP) < COS_MAX_SLOPE:
-			#continue
-
 		sum += n
 		count += 1
 	if count == 0:
 		return Vector3.UP
 	return (sum / count).normalized()
 
-# lower for smoother slerp
-const ALIGN_SPEED_GROUND = 6.0
-
 func check_air_or_ground_ray(rays: Array[RayCast3D]) -> bool:
 	var use_hover_band = true
 	if rays.size() > 0 and rays[0].target_position.length() > HOVER_UPPER_BAND:
 		use_hover_band = false
 	return use_hover_band
+
+
+const ALIGN_SPEED_GROUND = 6.0
 
 func apply_leveling_slerp(character: Character, rays: Array[RayCast3D], delta: float) -> void:
 	var target_up  = get_ground_normal(rays, check_air_or_ground_ray(rays))
@@ -174,9 +196,7 @@ func apply_leveling_slerp(character: Character, rays: Array[RayCast3D], delta: f
 
 	character.global_transform.basis = Basis(new_q).orthonormalized()
 
-func slide_on_slopes(character: Character, raycast_type: Array[RayCast3D]):
-	var normal = get_ground_normal(raycast_type)
-	character.velocity = character.velocity.slide(normal)
+
 
 func get_forward_direction_relative_to_surface(character: Character, raycast_type: Array[RayCast3D]) -> Vector3:
 	# World‑space “up” of the slope

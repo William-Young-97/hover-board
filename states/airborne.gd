@@ -31,7 +31,7 @@ func update(character: Character, delta):
 	if character.jumped:
 		ti.apply_gravity(delta, 2)
 	else:
-		ti.apply_gravity(delta, 1)
+		ti.apply_gravity(delta, 2)
 		# horrible input placement. Isolates steering from drift mechanic.
 		if character.input_left:
 			_input_turn = 1

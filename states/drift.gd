@@ -25,9 +25,10 @@ func update(character: Character, delta) -> void:
 	
 	ti.enforce_max_speed(character)
 	ti.apply_leveling_slerp(character, ti.grays, delta)
-	ti.slide_on_slopes(character, ti.grays)
 	ti.enforce_hover_floor(character,  ti.grays, delta)
+	ti.apply_gravity(delta)
 	character.move_and_slide()
+	
 	_dh._exit_at_20_mph(character)
 	_dh._apply_drift(character, delta)
 	

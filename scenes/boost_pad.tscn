@@ -1,0 +1,21 @@
+[gd_scene load_steps=4 format=3 uid="uid://dxg66k5txb0xi"]
+
+[ext_resource type="PackedScene" uid="uid://8d75t2cdrwys" path="res://game-models/map/boostpad.glb" id="1_sndxi"]
+[ext_resource type="Script" uid="uid://bt0k22rx7eyyh" path="res://physics-helpers/boost_pad.gd" id="2_k3ilj"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_k3ilj"]
+size = Vector3(1.96548, 2.00116, 14.9742)
+
+[node name="BoostPad" type="Node3D"]
+
+[node name="boostpad" parent="." instance=ExtResource("1_sndxi")]
+transform = Transform3D(6, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0)
+
+[node name="Area3D" type="Area3D" parent="."]
+collision_layer = 4
+collision_mask = 2
+script = ExtResource("2_k3ilj")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D"]
+transform = Transform3D(6, 0, 0, 0, 1, 0, 0, 0, 2, 0.0370941, 1.03289, 0.0108018)
+shape = SubResource("BoxShape3D_k3ilj")

@@ -1,19 +1,20 @@
-[gd_scene load_steps=8 format=3 uid="uid://cw14l4egx6kag"]
+[gd_scene load_steps=9 format=3 uid="uid://cw14l4egx6kag"]
 
 [ext_resource type="PackedScene" uid="uid://d4elnm5ktpi2n" path="res://scenes/ui.tscn" id="1_4ngia"]
 [ext_resource type="Texture2D" uid="uid://c2ac46bpv775u" path="res://game-models/map/panorama_image.png" id="2_d3gf4"]
 [ext_resource type="PackedScene" uid="uid://ddd6dpxasgawl" path="res://scenes/player.tscn" id="4_4mu13"]
 [ext_resource type="PackedScene" uid="uid://brfu8tv86yue6" path="res://game-models/map/Final Track WIP.glb" id="4_4ngia"]
+[ext_resource type="PackedScene" uid="uid://dxg66k5txb0xi" path="res://scenes/boost_pad.tscn" id="5_d3gf4"]
 
 [sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_5hw7b"]
 panorama = ExtResource("2_d3gf4")
 
-[sub_resource type="Sky" id="Sky_74lek"]
+[sub_resource type="Sky" id="Sky_4ngia"]
 sky_material = SubResource("PanoramaSkyMaterial_5hw7b")
 
 [sub_resource type="Environment" id="Environment_banxg"]
 background_mode = 2
-sky = SubResource("Sky_74lek")
+sky = SubResource("Sky_4ngia")
 
 [node name="Track2" type="Node3D"]
 
@@ -30,7 +31,10 @@ environment = SubResource("Environment_banxg")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -27.6335, 0)
 
 [node name="Player" parent="." instance=ExtResource("4_4mu13")]
-transform = Transform3D(-4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, 98.4732, 648.32, -3.33433)
+transform = Transform3D(0.844197, 0, 0.536034, 0, 1, 0, -0.536034, 0, 0.844197, 1924.86, 78.6566, 225.643)
 
 [node name="UI" parent="." instance=ExtResource("1_4ngia")]
 player_path = NodePath("../Player")
+
+[node name="BoostPad" parent="." instance=ExtResource("5_d3gf4")]
+transform = Transform3D(0.777278, 0.629158, 0, -0.629158, 0.777278, 0, 0, 0, 1, 1386.51, 134.618, 220.286)
