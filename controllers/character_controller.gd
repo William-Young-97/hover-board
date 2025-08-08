@@ -49,7 +49,6 @@ func _ready():
 	current_state.ti = _ti
 	current_state.vrc = _vrc
 
-	
 func _physics_process(delta: float) -> void:
 	_handle_inputs()
 	var _events = _handle_events()
@@ -62,7 +61,7 @@ func _physics_process(delta: float) -> void:
 	current_state.update(self, delta)
 
 		
-func load_and_configure_next_state(next_state: State, delta: float):
+func load_and_configure_next_state(next_state: State, delta := 0.01666666666667):
 		current_state.exit(self, delta)
 		current_state = next_state
 		# inject every state

@@ -27,19 +27,16 @@ func update(character: Character, delta):
 	character.move_and_slide()
 	ti.apply_leveling_slerp(character, ti.grays, delta)
 	
-	# flaky fix to speed up time between manual jumps and landing for drift
-	if character.jumped:
-		ti.apply_gravity(delta, 2)
+
+	ti.apply_gravity(delta, 2.2)
+	# horrible input placement. Isolates steering from drift mechanic.
+	if character.input_left:
+		_input_turn = 1
+	elif character.input_right:
+		_input_turn = -1
 	else:
-		ti.apply_gravity(delta, 2)
-		# horrible input placement. Isolates steering from drift mechanic.
-		if character.input_left:
-			_input_turn = 1
-		elif character.input_right:
-			_input_turn = -1
-		else:
-			_input_turn = 0
-		_ah.steer_airborne(character, _input_turn, delta)
+		_input_turn = 0
+	_ah.steer_airborne(character, _input_turn, delta)
 		
 	if self.eligible_to_drift_left == true or eligible_to_drift_right == true:
 		self.pre_drift_air_bank(character, delta)

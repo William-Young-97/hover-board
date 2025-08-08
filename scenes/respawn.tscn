@@ -1,0 +1,20 @@
+[gd_scene load_steps=3 format=3 uid="uid://myeiab1opeb3"]
+
+[ext_resource type="Script" uid="uid://bt1qy58mihsun" path="res://controllers/respawn/respawn_checkpoints.gd" id="1_grv7o"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_g0w6s"]
+size = Vector3(125.568, 70.6088, 4.81104)
+
+[node name="Respawn" type="Node3D"]
+
+[node name="RespawnZone" type="Area3D" parent="."]
+collision_layer = 8
+collision_mask = 2
+script = ExtResource("1_grv7o")
+
+[node name="SpawnPosition" type="Node3D" parent="RespawnZone"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.7339, 1.959, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="RespawnZone"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30.1391, 34.8044, -1.90552)
+shape = SubResource("BoxShape3D_g0w6s")

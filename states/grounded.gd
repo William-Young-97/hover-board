@@ -22,7 +22,6 @@ func exit(character: Character, delta: float):
 	character.right_drift = false
 
 func _on_exited_drift():
-	print("running")
 	exited_drift = true
 	_yaw_timer  = YAW_DURATION
 	

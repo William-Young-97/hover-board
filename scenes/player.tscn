@@ -4,14 +4,14 @@
 [ext_resource type="PackedScene" uid="uid://c4eddbn7u1bf7" path="res://game-models/player/hover_board.glb" id="2_g28gv"]
 [ext_resource type="Script" uid="uid://fahl3lw5jnxo" path="res://controllers/camera/camera_pivot.gd" id="3_hqtel"]
 [ext_resource type="Script" uid="uid://buo5keux23aw2" path="res://controllers/visual_roll_controller.gd" id="4_dqkch"]
-[ext_resource type="Script" uid="uid://yh26eb202n7a" path="res://physics-helpers/terrain_interaction_controller.gd" id="5_qlg0r"]
+[ext_resource type="Script" uid="uid://yh26eb202n7a" path="res://controllers/terrain_interaction_controller.gd" id="5_qlg0r"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_colhj"]
 size = Vector3(0.254715, 0.0462646, 1.50574)
 
-[node name="Player" type="Node3D"]
+[node name="Player" type="Node3D" groups=["player"]]
 
-[node name="PlayerController" type="CharacterBody3D" parent="." groups=["hoverboard"]]
+[node name="PlayerController" type="CharacterBody3D" parent="." groups=["hoverboard", "player"]]
 collision_layer = 2
 collision_mask = 5
 slide_on_ceiling = false
