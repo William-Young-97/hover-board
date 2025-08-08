@@ -2,7 +2,7 @@
 
 [ext_resource type="Texture2D" uid="uid://c2ac46bpv775u" path="res://game-models/map/panorama_image.png" id="1_yq0gg"]
 [ext_resource type="PackedScene" uid="uid://cknpa41edgqna" path="res://game-models/map/Racetrack1.glb" id="2_rpq1j"]
-[ext_resource type="PackedScene" uid="uid://ddd6dpxasgawl" path="res://scenes/player.tscn" id="3_rpq1j"]
+[ext_resource type="PackedScene" uid="uid://ddd6dpxasgawl" path="res://scenes/characters/player.tscn" id="3_rpq1j"]
 
 [sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_7lcsg"]
 panorama = ExtResource("1_yq0gg")

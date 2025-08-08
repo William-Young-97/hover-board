@@ -1,0 +1,18 @@
+[gd_scene load_steps=3 format=3 uid="uid://cviilx51fceso"]
+
+[ext_resource type="Script" uid="uid://dehnlsfjvlalq" path="res://controllers/lap/start_line.gd" id="1_vun7t"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_hlpdf"]
+size = Vector3(30, 7, 2)
+
+[node name="StartLine" type="Node3D"]
+
+[node name="Area3D" type="Area3D" parent="."]
+collision_layer = 8
+collision_mask = 2
+script = ExtResource("1_vun7t")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.98208, 0, 0)
+shape = SubResource("BoxShape3D_hlpdf")
+debug_color = Color(0.16583, 0.39758, 1, 1)

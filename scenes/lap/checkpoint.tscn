@@ -1,0 +1,18 @@
+[gd_scene load_steps=3 format=3 uid="uid://ctpgxbner88yb"]
+
+[ext_resource type="Script" uid="uid://bocukdt1ki1mk" path="res://controllers/lap/checkpoint.gd" id="1_gnuqm"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_gnuqm"]
+size = Vector3(30, 7, 2)
+
+[node name="Checkpoint" type="Node3D"]
+
+[node name="Area3D" type="Area3D" parent="."]
+collision_layer = 8
+collision_mask = 2
+script = ExtResource("1_gnuqm")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.64987, 3.04126, 0)
+shape = SubResource("BoxShape3D_gnuqm")
+debug_color = Color(0.916667, 0, 1, 1)

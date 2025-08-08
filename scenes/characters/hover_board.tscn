@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://cv8bypwa2sp6y"]
+
+[ext_resource type="PackedScene" uid="uid://c4eddbn7u1bf7" path="res://game-models/player/hover_board.glb" id="1_1y4n1"]
+
+[node name="HoverBoardModel" type="Node3D"]
+
+[node name="board" parent="." instance=ExtResource("1_1y4n1")]

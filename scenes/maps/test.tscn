@@ -1,10 +1,10 @@
 [gd_scene load_steps=9 format=3 uid="uid://nj65aff7f288"]
 
-[ext_resource type="PackedScene" uid="uid://ddd6dpxasgawl" path="res://scenes/player.tscn" id="1_74lek"]
-[ext_resource type="PackedScene" uid="uid://d4elnm5ktpi2n" path="res://scenes/ui.tscn" id="2_j5jx5"]
+[ext_resource type="PackedScene" uid="uid://ddd6dpxasgawl" path="res://scenes/characters/player.tscn" id="1_74lek"]
+[ext_resource type="PackedScene" uid="uid://d4elnm5ktpi2n" path="res://scenes/ui/ui.tscn" id="2_j5jx5"]
 [ext_resource type="Texture2D" uid="uid://c2ac46bpv775u" path="res://game-models/map/panorama_image.png" id="3_lpvoh"]
 [ext_resource type="PackedScene" uid="uid://drr268xrb3mn7" path="res://game-models/map/Square-park.glb" id="4_at5dv"]
-[ext_resource type="PackedScene" uid="uid://dxg66k5txb0xi" path="res://scenes/boost_pad.tscn" id="5_j5jx5"]
+[ext_resource type="PackedScene" uid="uid://dxg66k5txb0xi" path="res://scenes/boost/boost_pad.tscn" id="5_j5jx5"]
 
 [sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_ykrsh"]
 panorama = ExtResource("3_lpvoh")
