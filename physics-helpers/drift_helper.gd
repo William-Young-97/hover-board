@@ -24,7 +24,6 @@ var hf = HelperFunctions.new()
 func enter(character: Character, delta) -> void:
 	vrc.board_roll_amount = 0.8
 	
-	
 # this method will switch to handle left vs right drift
 func _apply_drift(character: Character, delta):
 	# extra guard against drift not releasing
@@ -136,8 +135,8 @@ func _apply_outward_drift(character: Character, drift_dir: int, delta: float) ->
 	var blend = clamp(pull_and_yaw * delta, 0.0, 1.0)
 	var planar_dir = planar_v / planar_spd
 	var new_dir    = planar_dir.lerp(inward_side, blend).normalized()
-	
-	var side_force_strength := 5.0
+	# This adds total speed not good bug
+	var side_force_strength := 10.0
 	var lateral_force_vec = side_on_plane * side_force_strength * -drift_dir
 	
 	var new_planar_v = new_dir * planar_spd
@@ -154,8 +153,8 @@ func _apply_outward_drift(character: Character, drift_dir: int, delta: float) ->
 	
 # drifting becomes more effective at higher speeds
 func _scale_drift_yaw_to_speed(character: Character, delta) -> float:
-	var starting_yaw_rate := 1.3
-	var max_yaw_rate      := 2.2
+	var starting_yaw_rate := 1.6
+	var max_yaw_rate      := 2.1
 	var min_carve_frac    := 0.2
 	var hvel = ti.get_hvel_relative_to_surface(character, ti.grays)
 
@@ -172,8 +171,8 @@ func _scale_drift_yaw_to_speed(character: Character, delta) -> float:
 	
 # build yaw based on time input held
 func _scale_yaw_to_input(character: Character, delta, max_yaw,  drift_dir):
-	var max_hold_time = 0.4
-	var starting_yaw_rate := 1.3
+	var max_hold_time = 0.2
+	var starting_yaw_rate := 1.6
 	var inward_held := false
 	
 	if  drift_dir == 1:

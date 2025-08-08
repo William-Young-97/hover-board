@@ -88,10 +88,10 @@ func should_leave_ground(rays: Array[RayCast3D]) -> bool:
 			return true
 	return false
 	
-const DEAD := 0.2
+const DEAD := 0.1
 const MAX_LIFT := 2.0
 
-const MAX_PULL = 8.0
+const MAX_PULL = 6.0
 
 
 func enforce_hover_floor(character: CharacterBody3D, rays: Array[RayCast3D], delta: float) -> void:

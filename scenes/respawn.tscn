@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://bt1qy58mihsun" path="res://controllers/respawn/respawn_checkpoints.gd" id="1_grv7o"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_g0w6s"]
-size = Vector3(125.568, 70.6088, 4.81104)
+size = Vector3(125.568, 89.2683, 4.81104)
 
 [node name="Respawn" type="Node3D"]
 

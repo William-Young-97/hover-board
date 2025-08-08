@@ -110,8 +110,8 @@ func accelerate(character: Character, delta: float) -> void:
 	character.velocity += forward * delta_fwd
 	
 # backward acceleration
-var _deceleration_rate := 10.0
-var _top_reverse_speed := 7.5
+var _deceleration_rate := 25.0
+var _top_reverse_speed := 25.0
 
 # could decompose this think about reuablility in drift for this and accel
 func decelerate(character: Character, delta: float) -> void:
@@ -154,8 +154,8 @@ func tend_speed_to_zero(character: Character, delta: float) -> void:
 		character.velocity += drag_dir * decel
 		
 # turn settings
-var _max_turn_rate := 1.5
-var _turn_acceleration := 45.0
+var _max_turn_rate := 1.1
+var _turn_acceleration := 25.0
 var _turn_damping := sqrt(_turn_acceleration)
 var _turn_velocity := 0.0
 

@@ -53,7 +53,13 @@ transform = Transform3D(-0.119634, 0, -0.992818, 0, 1, 0, 0.992818, 0, -0.119634
 transform = Transform3D(-4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, 764.22, -23.4067, 14.8736)
 
 [node name="Respawn3" parent="RespawnManager" groups=["RespawnPoint"] instance=ExtResource("6_f5cs5")]
-transform = Transform3D(-0.0419805, 0, -0.999118, 0, 1, 0, 0.999118, 0, -0.0419805, 1256.88, -23.6352, 15.6606)
+transform = Transform3D(-4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, 1247.77, -25.1722, 14.3161)
+
+[node name="RespawnZone" parent="RespawnManager/Respawn3" index="0"]
+transform = Transform3D(1, 0, 1.42109e-14, 0, 1, 0, -1.42109e-14, 0, 1, -1.90735e-06, 2.63757, -38.8093)
+
+[node name="CollisionShape3D" parent="RespawnManager/Respawn3/RespawnZone" index="1"]
+transform = Transform3D(1, 0, 2.06057e-13, 0, 1, 0, -2.06057e-13, 0, 1, -30.1391, 44.1341, -1.90552)
 
 [node name="Respawn4" parent="RespawnManager" groups=["RespawnPoint"] instance=ExtResource("6_f5cs5")]
 transform = Transform3D(-1, 0, 1.50996e-07, 0, 1, 0, -1.50996e-07, 0, -1, 1456.51, -23.4291, 241.863)
@@ -118,6 +124,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.16199, 1, -5.28979)
 [node name="MediumDeath6" parent="RespawnManager" groups=["DeathZone"] instance=ExtResource("9_banxg")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1802.59, 67, 266.103)
 
+[editable path="RespawnManager/Respawn3"]
 [editable path="RespawnManager/LargeDeath"]
 [editable path="RespawnManager/MediumDeath"]
 [editable path="RespawnManager/MediumDeath2"]
