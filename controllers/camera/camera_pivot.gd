@@ -6,11 +6,6 @@ extends Node3D
 @export var terrain_interactions_path: NodePath
 @onready var _terrain_interactions = get_node(terrain_interactions_path) as TerrainInteractions
 
-@export var left_drift_path: NodePath
-@onready var left_drift_look: Node3D =  get_node(left_drift_path)
-
-@export var right_drift_path: NodePath
-@onready var right_drift_look: Node3D =  get_node(right_drift_path)
 
 @export var smoothing_speed := 4.0   # tweak this higher → snappier, lower → more floaty
 var _camera_yaw := 0.0               # remember the last smoothed yaw
@@ -21,11 +16,11 @@ var _is_looking := false
 var _desired_yaw = 0.0
 
 func _ready() -> void:
-	_player.connect("left_drift_cam", _on_left_drift_cam)
-	_player.connect("right_drift_cam", _on_right_drift_cam)
+	pass
 # works for now but obviously coupled to velocity so I am manageing vel around it
+
 func _process(delta):
-	# 1) Compute your desired “forward” (−Z) and “up” (+Y) in world‑space:
+	#  Compute desired “forward” (−Z) and “up” (+Y) in world‑space:
 	var hvel = _terrain_interactions.get_hvel_relative_to_surface(_player, _terrain_interactions.grays)
 	if hvel.length() < 0.1:
 		return  # too slow to care
@@ -38,7 +33,7 @@ func _process(delta):
 	if up.dot(Vector3.UP) < 0:
 		up = -up
 	
-	# 2) Orthonormalize those into a full Basis:
+	# Orthonormalize those into a full Basis:
 	#    - X_axis = (forward × up).normalized()
 	#    - Recompute forward = (up × X_axis).normalized()
 	var x_axis = up.cross(flat_forward).normalized()
@@ -51,30 +46,4 @@ func _process(delta):
 	var t = clamp(smoothing_speed * delta, 0.0, 1.0)
 	var new_q = current_q.slerp(target_q, t)
 	
-	# 4) Apply it:
 	global_transform.basis = Basis(new_q)
-	
-	
-	#var hvel = _terrain_interactions.get_hvel_relative_to_surface(_player, _terrain_interactions.grays)
-	#if hvel.length() < 0.1:
-		#return  # too slow to care about direction
-	#var target_yaw = atan2(-hvel.x, -hvel.z)
-	## smoothly move our cached yaw toward it
-	#_camera_yaw = lerp_angle(_camera_yaw, target_yaw, smoothing_speed * delta)
-	## apply to world space
-	#self.global_rotation.y = _camera_yaw
-	#
-	## kill local rotation so we are fixed for slopes
-	#var loc_rot = rotation
-	#var flat_smoothing_speed = 1.3
-	#loc_rot.x = lerp_angle(loc_rot.x, 0.0, flat_smoothing_speed * delta)
-	#loc_rot.z = lerp_angle(loc_rot.z, 0.0, flat_smoothing_speed * delta)
-	#rotation = loc_rot
-
-
-func _on_left_drift_cam():
-	pass
-	
-func _on_right_drift_cam() -> void:
-	pass
-	#print("test right")

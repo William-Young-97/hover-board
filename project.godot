@@ -14,10 +14,21 @@ config/name="hover-board"
 run/main_scene="uid://cw14l4egx6kag"
 config/features=PackedStringArray("4.4", "Forward Plus")
 
+[debug_draw_3d]
+
+settings/addon_root_folder="res://addons"
+
 [global_group]
 
-hoverboard=""
 player=""
+respawn=""
+death=""
+respawn_manager=""
+lap_manager=""
+start_line=""
+lap_checkpoint=""
+way_points="for ai guidance"
+ai=""
 
 [input]
 

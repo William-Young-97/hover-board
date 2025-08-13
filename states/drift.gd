@@ -11,7 +11,7 @@ var _inward_drift_timer = 0
 var _dh: DriftHelper
 	
 func enter(character: Character, delta) -> void:
-	_dh = DriftHelper.new(ti, vrc, lm, rm)
+	_dh = DriftHelper.new(ti, vrc)
 	vrc.board_roll_amount = 0.8
 	print("Entering Drift")
 	
@@ -28,8 +28,6 @@ func update(character: Character, delta) -> void:
 	ti.enforce_hover_floor(character,  ti.grays, delta)
 	ti.apply_gravity(delta)
 	character.move_and_slide()
-	
-	_dh._exit_at_20_mph(character)
 	_dh._apply_drift(character, delta)
 	
 func on_trigger(character: Character, trigger: int, delta: float) -> State:

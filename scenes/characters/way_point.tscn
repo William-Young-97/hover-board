@@ -1,0 +1,3 @@
+[gd_scene format=3 uid="uid://b4hjvyx35gjgw"]
+
+[node name="WayPoint1" type="Node3D" groups=["way_points"]]

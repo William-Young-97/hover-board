@@ -2,8 +2,5 @@
 
 # DRIFT
 
+- no guard for going to 0 mph when drifting
 - outward drift should not add velocity but merge from existing velocity
-
-# JUMP
-
-- Not accounting for a manual jump over a ledge. This will give the 3x gravity where it should be normal

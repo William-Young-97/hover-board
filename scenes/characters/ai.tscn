@@ -1,0 +1,125 @@
+[gd_scene load_steps=7 format=3 uid="uid://bf6fvpeddtf6m"]
+
+[ext_resource type="Script" uid="uid://dgnmkh4uwid4o" path="res://controllers/character_controller.gd" id="1_eaibm"]
+[ext_resource type="PackedScene" uid="uid://c4eddbn7u1bf7" path="res://game-models/player/hover_board.glb" id="3_k4cmq"]
+[ext_resource type="Script" uid="uid://buo5keux23aw2" path="res://controllers/visual_roll_controller.gd" id="4_kcdfd"]
+[ext_resource type="Script" uid="uid://yh26eb202n7a" path="res://controllers/terrain_interaction_controller.gd" id="5_svhp3"]
+[ext_resource type="Script" uid="uid://b61h7i0wdt06s" path="res://controllers/inputs/ai_input.gd" id="6_eaibm"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_colhj"]
+size = Vector3(0.254715, 0.0462646, 1.50574)
+
+[node name="Ai" type="Node3D"]
+
+[node name="AiController" type="CharacterBody3D" parent="." groups=["ai"]]
+collision_layer = 2
+collision_mask = 5
+slide_on_ceiling = false
+wall_min_slide_angle = 0.0
+floor_stop_on_slope = false
+floor_block_on_wall = false
+floor_max_angle = 0.0
+floor_snap_length = 1.0
+script = ExtResource("1_eaibm")
+terrain_interactions_path = NodePath("../ScriptsNode/TerrainInteractions")
+visual_roll_path = NodePath("Board/VisualRollController")
+input_provider_path = NodePath("../ScriptsNode/Input")
+
+[node name="Board" parent="AiController" instance=ExtResource("3_k4cmq")]
+
+[node name="VisualRollController" type="Node3D" parent="AiController/Board"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -5.96046e-08, 0)
+visible = false
+script = ExtResource("4_kcdfd")
+board_model_path = NodePath("..")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="AiController"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.000637174, 0.067688, 0.00518799)
+shape = SubResource("BoxShape3D_colhj")
+
+[node name="RayCasts" type="Node3D" parent="AiController"]
+
+[node name="GroundDown" type="Node3D" parent="AiController/RayCasts"]
+
+[node name="RayCastFL" type="RayCast3D" parent="AiController/RayCasts/GroundDown" groups=["raycasts"]]
+transform = Transform3D(1, 0, 0, 0, 1, -7.45058e-09, 0, 7.45058e-09, 1, -0.15, 0.05, -0.5)
+target_position = Vector3(0, -1.5, 0)
+hit_from_inside = true
+debug_shape_custom_color = Color(1, 0, 0, 1)
+debug_shape_thickness = 1
+
+[node name="RayCastFR" type="RayCast3D" parent="AiController/RayCasts/GroundDown" groups=["raycasts"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.15, 0.05, -0.5)
+target_position = Vector3(0, -1.5, 0)
+hit_from_inside = true
+debug_shape_custom_color = Color(1, 0, 0, 1)
+debug_shape_thickness = 1
+
+[node name="RayCastBL" type="RayCast3D" parent="AiController/RayCasts/GroundDown" groups=["raycasts"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.15, 0.05, 0.5)
+target_position = Vector3(0, -1.5, 0)
+hit_from_inside = true
+debug_shape_custom_color = Color(1, 0, 0, 1)
+debug_shape_thickness = 1
+
+[node name="RayCastBR" type="RayCast3D" parent="AiController/RayCasts/GroundDown" groups=["raycasts"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.15, 0.05, 0.5)
+target_position = Vector3(0, -1.5, 0)
+hit_from_inside = true
+debug_shape_custom_color = Color(1, 0, 0, 1)
+debug_shape_thickness = 1
+
+[node name="Steering" type="Node3D" parent="AiController/RayCasts"]
+
+[node name="RayCastLB" type="RayCast3D" parent="AiController/RayCasts/Steering"]
+transform = Transform3D(0.927033, 0.374979, 0, -0.374979, 0.927033, 0, 0, 0, 1, -0.2, 0, 0.476146)
+target_position = Vector3(0, -1.5, 0)
+hit_from_inside = true
+
+[node name="RayCastLM" type="RayCast3D" parent="AiController/RayCasts/Steering"]
+transform = Transform3D(0.927033, 0.374979, 0, -0.374979, 0.927033, 0, 0, 0, 1, -0.2, 0, 0)
+target_position = Vector3(0, -1.5, 0)
+hit_from_inside = true
+
+[node name="RayCastLF" type="RayCast3D" parent="AiController/RayCasts/Steering"]
+transform = Transform3D(0.927033, 0.374979, 0, -0.374979, 0.927033, 0, 0, 0, 1, -0.2, 0, -0.467865)
+target_position = Vector3(0, -1.5, 0)
+hit_from_inside = true
+
+[node name="RayCastRB" type="RayCast3D" parent="AiController/RayCasts/Steering"]
+transform = Transform3D(-0.927184, -0.374607, 8.74228e-08, -0.374607, 0.927184, 0, -8.1057e-08, -3.27491e-08, -1, 0.201344, 0, 0.473111)
+target_position = Vector3(0, -1.5, 0)
+hit_from_inside = true
+
+[node name="RayCastRM" type="RayCast3D" parent="AiController/RayCasts/Steering"]
+transform = Transform3D(-0.927184, -0.374607, 8.74228e-08, -0.374607, 0.927184, 0, -8.1057e-08, -3.27491e-08, -1, 0.185374, 0, 0.00551907)
+target_position = Vector3(0, -1.5, 0)
+hit_from_inside = true
+
+[node name="RayCastRF" type="RayCast3D" parent="AiController/RayCasts/Steering"]
+transform = Transform3D(-0.927184, -0.374607, 8.74228e-08, -0.374607, 0.927184, 0, -8.1057e-08, -3.27491e-08, -1, 0.169123, 0, -0.470349)
+target_position = Vector3(0, -1.5, 0)
+hit_from_inside = true
+
+[node name="RayCastF" type="RayCast3D" parent="AiController/RayCasts/Steering"]
+transform = Transform3D(-3.09086e-08, -3.09086e-08, -1, -0.707107, 0.707107, 0, 0.707107, 0.707107, -4.37114e-08, 0, 0, -0.65)
+target_position = Vector3(0, -1.5, 0)
+hit_from_inside = true
+
+[node name="RayCastB" type="RayCast3D" parent="AiController/RayCasts/Steering"]
+transform = Transform3D(-3.09086e-08, -3.09086e-08, 1, -0.707107, 0.707107, 0, -0.707107, -0.707107, -4.37114e-08, 0, 0, 0.65)
+target_position = Vector3(0, -1.5, 0)
+
+[node name="ScriptsNode" type="Node3D" parent="."]
+
+[node name="TerrainInteractions" type="Node3D" parent="ScriptsNode"]
+script = ExtResource("5_svhp3")
+character_path = NodePath("../../AiController")
+gfl_path = NodePath("../../AiController/RayCasts/GroundDown/RayCastFL")
+gfr_path = NodePath("../../AiController/RayCasts/GroundDown/RayCastFR")
+gbl_path = NodePath("../../AiController/RayCasts/GroundDown/RayCastBL")
+gbr_path = NodePath("../../AiController/RayCasts/GroundDown/RayCastBR")
+
+[node name="Input" type="Node3D" parent="ScriptsNode" node_paths=PackedStringArray("character")]
+script = ExtResource("6_eaibm")
+character = NodePath("../../AiController")

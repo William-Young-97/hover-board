@@ -7,16 +7,10 @@ class_name Character
 @onready var _ti: TerrainInteractions = get_node(terrain_interactions_path)
 @export var visual_roll_path: NodePath
 @onready var _vrc: VisualRollController = get_node(visual_roll_path)
-
-# get lookahead targets to inject for drift helper
-@export var left_marker_cam_path: NodePath
-@onready var _lm: Node3D = get_node(left_marker_cam_path)
-@export var right_marker_cam_path: NodePath
-@onready var _rm: Node3D = get_node(right_marker_cam_path)
-
+@export var input_provider_path: NodePath
+@onready var input_provider: InputProvider = get_node(input_provider_path)
 
 signal exited_drift(character: Character)
-
 
 # state and inputs exposed
 var current_state : State = null
@@ -41,7 +35,6 @@ var drift_dir = 0
 var left_drift = false
 var right_drift = false
 
-	
 func _ready():
 	# inject *this* character into the roll controller
 	_vrc.character = self
@@ -60,25 +53,22 @@ func _physics_process(delta: float) -> void:
 	
 	current_state.update(self, delta)
 
-		
 func load_and_configure_next_state(next_state: State, delta := 0.01666666666667):
 		current_state.exit(self, delta)
 		current_state = next_state
 		# inject every state
 		current_state.ti = self._ti
 		current_state.vrc = self._vrc
-		current_state.lm = self._lm
-		current_state.rm = self._rm
 		current_state.enter(self, delta)
 
 func _handle_inputs():
-	input_forward  = Input.is_action_pressed("forward")
-	input_backward = Input.is_action_pressed("back")
-	input_left = Input.is_action_pressed("left")
-	input_right = Input.is_action_pressed("right")
-	input_jump_just_pressed = Input.is_action_just_pressed("jump_drift")
-	input_jump_held  = Input.is_action_pressed("jump_drift")
-	input_jump_released = Input.is_action_just_released("jump_drift")
+	input_forward          = input_provider.is_forward()
+	input_backward         = input_provider.is_backward()
+	input_left             = input_provider.is_left()
+	input_right            = input_provider.is_right()
+	input_jump_just_pressed= input_provider.is_jump_pressed()
+	input_jump_held        = input_provider.is_jump_held()
+	input_jump_released    = input_provider.is_jump_released()
 
 var _was_grounded := false
 var _was_airborne := false

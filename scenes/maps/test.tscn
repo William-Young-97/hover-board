@@ -1,10 +1,17 @@
-[gd_scene load_steps=9 format=3 uid="uid://nj65aff7f288"]
+[gd_scene load_steps=16 format=3 uid="uid://nj65aff7f288"]
 
-[ext_resource type="PackedScene" uid="uid://ddd6dpxasgawl" path="res://scenes/characters/player.tscn" id="1_74lek"]
+[ext_resource type="Script" uid="uid://ovfjfgb35hyq" path="res://controllers/lap/lap_manager.gd" id="1_xc7b3"]
 [ext_resource type="PackedScene" uid="uid://d4elnm5ktpi2n" path="res://scenes/ui/ui.tscn" id="2_j5jx5"]
 [ext_resource type="Texture2D" uid="uid://c2ac46bpv775u" path="res://game-models/map/panorama_image.png" id="3_lpvoh"]
 [ext_resource type="PackedScene" uid="uid://drr268xrb3mn7" path="res://game-models/map/Square-park.glb" id="4_at5dv"]
 [ext_resource type="PackedScene" uid="uid://dxg66k5txb0xi" path="res://scenes/boost/boost_pad.tscn" id="5_j5jx5"]
+[ext_resource type="PackedScene" uid="uid://cviilx51fceso" path="res://scenes/lap/start_line.tscn" id="7_j8273"]
+[ext_resource type="PackedScene" uid="uid://ctpgxbner88yb" path="res://scenes/lap/checkpoint.tscn" id="8_llp6g"]
+[ext_resource type="PackedScene" uid="uid://myeiab1opeb3" path="res://scenes/respawn/respawn.tscn" id="9_2ofk4"]
+[ext_resource type="PackedScene" uid="uid://fc2fnaxe7big" path="res://scenes/respawn/respawn_manager.tscn" id="9_gsybr"]
+[ext_resource type="PackedScene" uid="uid://bf6fvpeddtf6m" path="res://scenes/characters/ai.tscn" id="9_llp6g"]
+[ext_resource type="PackedScene" uid="uid://dxqnsiuj0e4fs" path="res://scenes/respawn/large_death.tscn" id="9_v5365"]
+[ext_resource type="Script" uid="uid://bfj20kv644rsy" path="res://controllers/respawn/respawn_manager.gd" id="10_gsybr"]
 
 [sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_ykrsh"]
 panorama = ExtResource("3_lpvoh")
@@ -17,6 +24,7 @@ background_mode = 2
 sky = SubResource("Sky_74lek")
 
 [node name="World" type="Node3D"]
+script = ExtResource("1_xc7b3")
 
 [node name="Square-park10" parent="." instance=ExtResource("4_at5dv")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.471, -120.39)
@@ -25,16 +33,14 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.471, -120.39)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.471015, -60.1182)
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
-transform = Transform3D(-0.866024, -0.433016, 0.250001, 0, 0.499998, 0.866026, -0.500003, 0.749999, -0.43301, 0, 3.5986, 0)
+transform = Transform3D(-0.866024, -0.433016, 0.250001, 0, 0.499998, 0.866027, -0.500003, 0.75, -0.43301, 0, 22.2334, -50.946)
 light_color = Color(1, 0.942976, 0.941426, 1)
 light_energy = 3.0
 shadow_enabled = true
 
-[node name="Player" parent="." instance=ExtResource("1_74lek")]
-transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -0.055, 0.713539, 18.158)
-
 [node name="UI" parent="." instance=ExtResource("2_j5jx5")]
-player_path = NodePath("../Player")
+player_path = NodePath("../Ai")
+lap_manager_path = NodePath("../LapManager")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_vbegm")
@@ -86,4 +92,39 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 60.3794, -0.471, -180.202)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -59.5647, -0.471, -180.485)
 
 [node name="BoostPad" parent="." instance=ExtResource("5_j5jx5")]
-transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -8.58, 0.4936, 56.1883)
+transform = Transform3D(-4.37114e-08, -3.01199e-15, 1, -0.493714, 0.869624, -2.15809e-08, -0.869624, -0.493714, -3.80125e-08, -8.58, 7.97597, 102.964)
+
+[node name="LapManager" type="Node" parent="."]
+script = ExtResource("1_xc7b3")
+
+[node name="StartLine" parent="LapManager" groups=["start-line"] instance=ExtResource("7_j8273")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.852749, 5.04744, -53.3315)
+
+[node name="Checkpoint" parent="LapManager" groups=["lap-checkpoint"] instance=ExtResource("8_llp6g")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.881128, 1.406, -35.0063)
+
+[node name="Ai" parent="." instance=ExtResource("9_llp6g")]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 1.31375, -56.7388)
+
+[node name="RespawnManager" parent="." instance=ExtResource("9_gsybr")]
+script = ExtResource("10_gsybr")
+
+[node name="Respawn" parent="RespawnManager" groups=["RespawnPoint"] instance=ExtResource("9_2ofk4")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14.1967, 0.529, -52.7226)
+
+[node name="LargeDeath" parent="RespawnManager" groups=["DeathZone"] instance=ExtResource("9_v5365")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -247.166, -43.5711, 273.308)
+
+[node name="WayPoints" type="Node" parent="."]
+
+[node name="WayPoint 1" type="Node3D" parent="WayPoints" groups=["way_points"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.07983, 1.19197, -26.6587)
+
+[node name="WayPoint 2" type="Node3D" parent="WayPoints" groups=["way_points"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.09684, 1.19197, 3.69133)
+
+[node name="WayPoint 3" type="Node3D" parent="WayPoints" groups=["WayPoints", "way_points"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 66.6359, 1.19197, 119.599)
+
+[node name="WayPoint 4" type="Node3D" parent="WayPoints" groups=["WayPoints", "way_points"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 137.747, 1.19197, 214.111)

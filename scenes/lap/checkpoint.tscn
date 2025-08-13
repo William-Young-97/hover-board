@@ -5,7 +5,7 @@
 [sub_resource type="BoxShape3D" id="BoxShape3D_gnuqm"]
 size = Vector3(30, 7, 2)
 
-[node name="Checkpoint" type="Node3D"]
+[node name="Checkpoint" type="Node3D" groups=["lap_checkpoint"]]
 
 [node name="Area3D" type="Area3D" parent="."]
 collision_layer = 8

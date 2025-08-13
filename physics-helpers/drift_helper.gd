@@ -6,17 +6,13 @@ class_name DriftHelper
 
 var ti: TerrainInteractions
 var vrc: VisualRollController
-var lm: Node3D
-var rm: Node3D
 
 var outward_carve = false
 var inward_carve = false
 
-func _init(_ti: TerrainInteractions, _vrc: VisualRollController, _lm: Node3D, _rm: Node3D) -> void:
+func _init(_ti: TerrainInteractions, _vrc: VisualRollController) -> void:
 	ti = _ti
 	vrc = _vrc
-	lm = _lm
-	rm = _rm
 
 var _inward_drift_timer = 0
 var hf = HelperFunctions.new()
@@ -261,12 +257,3 @@ func _decelerate_drift(character: Character, delta: float) -> void:
 
 	# re‑assemble elocity
 	character.velocity = new_planar + n * normal_spd
-
-# probably a slightly unessecary guard given i dont bleed drift speed
-# does guard for people trying to deccel tho so screw it
-
-func _exit_at_20_mph(character: Character):
-	var mph = HelperFunctions.get_mph(character)
-	
-	if mph <= 20:
-		Input.action_release("jump_drift")

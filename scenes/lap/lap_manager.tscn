@@ -1,0 +1,3 @@
+[gd_scene format=3 uid="uid://cbcmx7cdvxes2"]
+
+[node name="LapManager" type="Node3D" groups=["lap_manager"]]

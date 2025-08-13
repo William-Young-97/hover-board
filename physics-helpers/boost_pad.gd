@@ -1,45 +1,57 @@
 extends Area3D
-# How strong the boost should be (tweak to taste)
-@export var boost_strength: float = 2000.0
-# Optional cooldown so the player can’t retrigger every frame
-@export var cooldown: float = 0.5
 
-var _last_boost_time: float = -1.0
+@export var boost_strength: float = 300.0    # world units/second
+@export var boost_duration: float = 0.5     # seconds
+@export var cooldown: float = 0.1
 
-func _ready():
-	# Make sure this Area3D is monitoring bodies
+var _last_boost_time := {}
+var _active_boosts := {} # body -> time remaining
+
+func _ready() -> void:
 	monitoring = true
-	# Connect the signal
 	body_entered.connect(_on_body_entered)
-	
+	set_physics_process(true)
+
 func _on_body_entered(body: Node) -> void:
-	if not body is CharacterBody3D:
+	if not (body is CharacterBody3D):
 		return
 
-	# — you still want your cooldown check here —
+	var now := Time.get_ticks_msec() * 0.001
+	if _last_boost_time.has(body) and now - _last_boost_time[body] < cooldown:
+		return
+	_last_boost_time[body] = now
 
-	# 1) get a usable surface normal
-	var n = body.get_floor_normal()
-	if not body.is_on_floor() or n == Vector3.ZERO:
-		n = Vector3.UP
-	n = n.normalized()
+	# Start or refresh the boost timer for this body
+	_active_boosts[body] = boost_duration
 
-	# 2) decompose current velocity
-	var old_v      = body.velocity
-	var normal_spd = old_v.dot(n)               # speed into/out of the slope
-	var planar_v   = old_v - n * normal_spd     # the part sliding along the slope
-	var planar_spd = planar_v.length()
+func _physics_process(delta: float) -> void:
+	# Apply boost effect to all active bodies
+	for body in _active_boosts.keys():
+		if not is_instance_valid(body):
+			_active_boosts.erase(body)
+			continue
 
-	# if you’re basically stationary on that slope, pick the character’s facing as planar direction:
-	if planar_spd < 0.001:
-		var raw_fwd = -body.global_transform.basis.z.normalized()
-		planar_v = (raw_fwd - n * raw_fwd.dot(n)).normalized()
-		planar_spd = 0.0
+		var cb := body as CharacterBody3D
 
-	# 3) boost only the planar component
-	planar_spd += boost_strength
+		# Figure out boost direction based on current motion or facing
+		var n := Vector3.UP
+		if cb.is_on_floor():
+			var fn := cb.get_floor_normal()
+			if fn != Vector3.ZERO:
+				n = fn.normalized()
 
-	# 4) rebuild the final velocity
-	body.velocity = planar_v.normalized() * planar_spd + n * normal_spd
+		var old_v := cb.velocity
+		var normal_spd := old_v.dot(n)
+		var planar_v := old_v - n * normal_spd
+		if planar_v.length() < 0.001:
+			var raw_fwd := -cb.global_transform.basis.z.normalized()
+			planar_v = (raw_fwd - n * raw_fwd.dot(n)).normalized()
 
-	print("Boosted planar speed to ", planar_spd, "on normal ", n)
+		# Add boost without erasing existing momentum
+		var boost_vec := planar_v.normalized() * boost_strength
+		cb.velocity += boost_vec * delta
+
+		# Countdown timer
+		_active_boosts[body] -= delta
+		if _active_boosts[body] <= 0.0:
+			_active_boosts.erase(body)

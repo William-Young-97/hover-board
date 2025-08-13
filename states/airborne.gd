@@ -27,7 +27,7 @@ func update(character: Character, delta):
 	character.move_and_slide()
 	ti.apply_leveling_slerp(character, ti.grays, delta)
 	
-
+	ti.enforce_max_speed(character)
 	ti.apply_gravity(delta, 2.2)
 	# horrible input placement. Isolates steering from drift mechanic.
 	if character.input_left:

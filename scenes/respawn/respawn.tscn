@@ -5,7 +5,7 @@
 [sub_resource type="BoxShape3D" id="BoxShape3D_g0w6s"]
 size = Vector3(125.568, 89.2683, 4.81104)
 
-[node name="Respawn" type="Node3D"]
+[node name="Respawn" type="Node3D" groups=["respawn"]]
 
 [node name="RespawnZone" type="Area3D" parent="."]
 collision_layer = 8

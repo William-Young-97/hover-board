@@ -5,7 +5,7 @@
 [sub_resource type="BoxShape3D" id="BoxShape3D_258an"]
 size = Vector3(583.48, 10, 242.766)
 
-[node name="MediumDeath" type="Node3D"]
+[node name="MediumDeath" type="Node3D" groups=["death"]]
 
 [node name="DeathZone" type="Area3D" parent="."]
 collision_layer = 8
