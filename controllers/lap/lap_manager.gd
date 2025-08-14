@@ -43,7 +43,7 @@ func _on_start_line_crossed(body: Node) -> void:
 	# Race complete?
 	if _race_over:
 		return
-	if lap_counts[body] >= 2:
+	if lap_counts[body] >= 4:
 		_race_over = true
 		var result: String
 		if body.is_in_group("player"):

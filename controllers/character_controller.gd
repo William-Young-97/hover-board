@@ -44,6 +44,8 @@ func _ready():
 	current_state.vrc = _vrc
 
 func _physics_process(delta: float) -> void:
+	if not input_enabled:
+		return
 	_handle_inputs()
 	var _events = _handle_events()
 	for trigger in _events:
@@ -61,6 +63,11 @@ func load_and_configure_next_state(next_state: State, delta := 0.01666666666667)
 		current_state.ti = self._ti
 		current_state.vrc = self._vrc
 		current_state.enter(self, delta)
+
+var input_enabled := true
+
+func set_input_enabled(state: bool) -> void:
+	input_enabled = state
 
 func _handle_inputs():
 	input_forward = input_provider.is_forward()

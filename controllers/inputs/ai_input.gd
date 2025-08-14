@@ -161,17 +161,17 @@ func _edge_ahead() -> bool:
 		if hit.is_empty():
 			edge_detected = true
 
-		if debug_draw_rays:
-			var end_pos: Vector3
-			var color: Color
-			if hit.is_empty():
-				end_pos = to
-				color = Color.RED
-			else:
-				end_pos = hit.position
-				color = Color.GREEN
-
-			DebugDraw3D.draw_line(from, end_pos, color, 0.05)
+		#if debug_draw_rays:
+			#var end_pos: Vector3
+			#var color: Color
+			#if hit.is_empty():
+				#end_pos = to
+				#color = Color.RED
+			#else:
+				#end_pos = hit.position
+				#color = Color.GREEN
+#
+			#DebugDraw3D.draw_line(from, end_pos, color, 0.05)
 
 	return edge_detected
 
