@@ -1,0 +1,109 @@
+[gd_scene load_steps=8 format=3 uid="uid://clh2csmioerp7"]
+
+[ext_resource type="Script" uid="uid://dqe2o4vug4066" path="res://ui/main_menu.gd" id="1_26jnn"]
+[ext_resource type="Texture2D" uid="uid://c2ac46bpv775u" path="res://game-models/map/panorama_image.png" id="2_26ao7"]
+[ext_resource type="Texture2D" uid="uid://ct3x0he222w" path="res://game-models/map/nebularush title.png" id="3_p202s"]
+[ext_resource type="StyleBox" uid="uid://dgixev7qh20ny" path="res://ui/default_button.tres" id="4_xldvp"]
+
+[sub_resource type="FontVariation" id="FontVariation_bd1g4"]
+variation_embolden = 0.5
+
+[sub_resource type="FontVariation" id="FontVariation_0krl8"]
+variation_embolden = 0.5
+
+[sub_resource type="FontVariation" id="FontVariation_26jnn"]
+variation_embolden = 0.75
+
+[node name="Completed" type="Control"]
+custom_minimum_size = Vector2(600, 500)
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_26jnn")
+
+[node name="PanoramaImage" type="Sprite2D" parent="."]
+position = Vector2(901, 502)
+texture = ExtResource("2_26ao7")
+
+[node name="NebularushTitle" type="Sprite2D" parent="."]
+position = Vector2(566, 181)
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("3_p202s")
+
+[node name="CenterContainer" type="CenterContainer" parent="."]
+custom_minimum_size = Vector2(600, 100)
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -306.0
+offset_top = -306.0
+offset_right = 294.0
+offset_bottom = -76.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer"]
+custom_minimum_size = Vector2(600, 200)
+layout_mode = 2
+theme_override_constants/separation = 30
+alignment = 1
+
+[node name="PlayAgain" type="Button" parent="CenterContainer/VBoxContainer"]
+custom_minimum_size = Vector2(600, 100)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.690196, 0.478431, 0.176471, 1)
+theme_override_fonts/font = SubResource("FontVariation_bd1g4")
+theme_override_font_sizes/font_size = 35
+theme_override_styles/focus = ExtResource("4_xldvp")
+theme_override_styles/disabled_mirrored = ExtResource("4_xldvp")
+theme_override_styles/disabled = ExtResource("4_xldvp")
+theme_override_styles/hover_pressed_mirrored = ExtResource("4_xldvp")
+theme_override_styles/hover_pressed = ExtResource("4_xldvp")
+theme_override_styles/hover_mirrored = ExtResource("4_xldvp")
+theme_override_styles/hover = ExtResource("4_xldvp")
+theme_override_styles/pressed_mirrored = ExtResource("4_xldvp")
+theme_override_styles/pressed = ExtResource("4_xldvp")
+theme_override_styles/normal_mirrored = ExtResource("4_xldvp")
+theme_override_styles/normal = ExtResource("4_xldvp")
+action_mode = 0
+text = "Play Again?
+"
+
+[node name="Quit" type="Button" parent="CenterContainer/VBoxContainer"]
+custom_minimum_size = Vector2(600, 100)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.690196, 0.478431, 0.176471, 1)
+theme_override_fonts/font = SubResource("FontVariation_0krl8")
+theme_override_font_sizes/font_size = 35
+theme_override_styles/focus = ExtResource("4_xldvp")
+theme_override_styles/disabled_mirrored = ExtResource("4_xldvp")
+theme_override_styles/disabled = ExtResource("4_xldvp")
+theme_override_styles/hover_pressed_mirrored = ExtResource("4_xldvp")
+theme_override_styles/hover_pressed = ExtResource("4_xldvp")
+theme_override_styles/hover_mirrored = ExtResource("4_xldvp")
+theme_override_styles/hover = ExtResource("4_xldvp")
+theme_override_styles/pressed_mirrored = ExtResource("4_xldvp")
+theme_override_styles/pressed = ExtResource("4_xldvp")
+theme_override_styles/normal_mirrored = ExtResource("4_xldvp")
+theme_override_styles/normal = ExtResource("4_xldvp")
+action_mode = 0
+text = "Quit"
+
+[node name="Result" type="Label" parent="."]
+custom_minimum_size = Vector2(30, 30)
+layout_mode = 0
+offset_left = 51.0
+offset_top = 103.0
+offset_right = 204.0
+offset_bottom = 186.0
+theme_override_colors/font_color = Color(0.690196, 0.478431, 0.176471, 1)
+theme_override_constants/outline_size = 0
+theme_override_fonts/font = SubResource("FontVariation_26jnn")
+theme_override_font_sizes/font_size = 60
+text = "Hello"

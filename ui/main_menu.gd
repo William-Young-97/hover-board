@@ -1,13 +1,24 @@
 extends Control
 
-@export var race_scene_path: String = "res://scenes/maps/track_2.tscn"
+@export var race_scene_path: String = "res://scenes/RaceTrack.tscn"
+
+@onready var _label: Label = $Result
+@onready var _play:  Button = $CenterContainer/VBoxContainer/PlayAgain
+@onready var _quit:  Button = $CenterContainer/VBoxContainer/Quit
 
 func _ready():
-	$CenterContainer/VBoxContainer/Play.connect("pressed", _on_play_pressed)
-	$CenterContainer/VBoxContainer/Quit.connect("pressed", _on_quit_pressed)
+	process_mode = Node.PROCESS_MODE_ALWAYS
+	_play.pressed.connect(_on_play_again)
+	_quit.pressed.connect(_on_quit)
 
-func _on_play_pressed() -> void:
+func set_result_text(t: String) -> void:
+	_label.text = t
+
+func _on_play_again() -> void:
+	get_tree().paused = false
 	get_tree().change_scene_to_file(race_scene_path)
 
-func _on_quit_pressed() -> void:
+
+
+func _on_quit() -> void:
 	get_tree().quit()
