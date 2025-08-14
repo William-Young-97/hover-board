@@ -175,10 +175,11 @@ func _edge_ahead() -> bool:
 
 	return edge_detected
 
-func is_forward() -> bool:       return _fwd
-func is_backward() -> bool:      return _back
-func is_left() -> bool:          return _left
-func is_right() -> bool:         return _right
-func is_jump_pressed() -> bool:  return false
-func is_jump_held() -> bool:     return false
+func is_forward() -> bool: return _fwd
+func is_backward() -> bool: return _back
+func is_left() -> bool: return _left
+func is_right() -> bool: return _right
+func is_jump_pressed() -> bool: return false
+func is_jump_held() -> bool: return false
 func is_jump_released() -> bool: return false
+func is_pause() -> bool: return false

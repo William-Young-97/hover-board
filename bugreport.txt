@@ -4,3 +4,4 @@
 
 - no guard for going to 0 mph when drifting
 - outward drift should not add velocity but merge from existing velocity
+- cant cancel drift mid air (releasing drift button in jump still lands in drift)

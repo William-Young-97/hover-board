@@ -22,6 +22,7 @@ var input_boost := false
 var input_jump_just_pressed := false
 var input_jump_held := false
 var input_jump_released := false
+var input_pause := false
 
 # used across some states. I could inject them but this is easier for now
 var jumped = false
@@ -62,13 +63,14 @@ func load_and_configure_next_state(next_state: State, delta := 0.01666666666667)
 		current_state.enter(self, delta)
 
 func _handle_inputs():
-	input_forward          = input_provider.is_forward()
-	input_backward         = input_provider.is_backward()
-	input_left             = input_provider.is_left()
-	input_right            = input_provider.is_right()
-	input_jump_just_pressed= input_provider.is_jump_pressed()
-	input_jump_held        = input_provider.is_jump_held()
-	input_jump_released    = input_provider.is_jump_released()
+	input_forward = input_provider.is_forward()
+	input_backward = input_provider.is_backward()
+	input_left = input_provider.is_left()
+	input_right = input_provider.is_right()
+	input_jump_just_pressed = input_provider.is_jump_pressed()
+	input_jump_held = input_provider.is_jump_held()
+	input_jump_released = input_provider.is_jump_released()
+	input_pause = input_provider.is_pause()
 
 var _was_grounded := false
 var _was_airborne := false
@@ -90,7 +92,10 @@ func _handle_events() -> Array:
 		_events.append(Events.Trigger.JUMP_HELD)
 	if input_jump_released:
 		_events.append(Events.Trigger.JUMP_RELEASE)
+	if input_pause:
+		PauseManager.toggle_pause()
 
+	
 	# environment‑based transitions
 	if _ti.should_land(_ti.grays) and current_state.state_name != "grounded":
 		_ti._apply_landing_damper(self)
